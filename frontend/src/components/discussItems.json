@@ -8,8 +8,8 @@
     },
     "2":{
         "src":"images/prince.jpg",
-        "name":"Синий бархат",
-        "author":"",
+        "name":"Маленький принц",
+        "author":"Антуан де Сент-Экзюпери",
         "members":3,
         "notes":103
     }

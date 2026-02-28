@@ -4,6 +4,7 @@ import LibraryView from './pages/LibraryView'
 import ReaderView from './pages/ReaderView'
 import SessionsView from './pages/SessionsView'
 import ProfileView from './pages/ProfileView'
+import SessionReaderView from './pages/SessionReaderView.jsx';
 function App() {
   return (
     <>
@@ -13,6 +14,7 @@ function App() {
         <Route path="/reader" element={<ReaderView />} /> 
         <Route path="/sessions" element={<SessionsView />} /> 
         <Route path="/profile" element={<ProfileView />} /> 
+        <Route path="/session-reader" element={<SessionReaderView />} />
       </Routes>
     </>
   )

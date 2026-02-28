@@ -27,11 +27,11 @@ export default function LibraryBook({ src, name, author, progress }) {
             Открыть
           </button>
           </Link>
-          <Link to="/reader">
+         
           <button className="bg-accent-1 text-beige-1 rounded-2xl px-4 py-1 hover:cursor-pointer">
             Сессия
           </button>
-          </Link>
+          
         </div>
       </div>
     </div>

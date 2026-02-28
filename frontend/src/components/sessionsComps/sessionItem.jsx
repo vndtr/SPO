@@ -17,12 +17,11 @@ export default function SessionItem({src, name, progress, author, members, notes
                 {url}
             </div>
             <div className='flex my-8 justify-end'>
-              <Link to="/reader">
-              <button className='bg-accent-1    
-              text-beige-1
-              rounded-2xl
-              px-4 py-1 hover:cursor-pointer'
-              >Перейти</button></Link>
+              <Link to="/session-reader">
+    <button className='bg-accent-1 text-beige-1 rounded-2xl px-4 py-1 hover:cursor-pointer'>
+        Перейти
+    </button>
+</Link>
             </div>
         </div>
     </div>
