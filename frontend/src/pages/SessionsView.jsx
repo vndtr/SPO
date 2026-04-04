@@ -1,0 +1,119 @@
+// frontend/src/pages/SessionsView.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/mainComps/Header.jsx';
+import NavAside from '../components/mainComps/NavAside.jsx';
+import SessionItem from '../components/sessionsComps/sessionItem.jsx';
+import CreateSessionModal from '../components/sessionsComps/CreateSessionModal.jsx';
+import { getSessions, createSession, getBookById } from '../services/api';
+
+export default function SessionsView() {
+  const [sessions, setSessions] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [books, setBooks] = useState({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  const loadSessions = async () => {
+    try {
+      setLoading(true);
+      const sessionsData = await getSessions();
+      console.log('Sessions loaded:', sessionsData);
+      
+      // Загружаем информацию о книгах
+      const booksData = {};
+      for (const session of sessionsData) {
+        if (!booksData[session.book_id]) {
+          try {
+            const book = await getBookById(session.book_id);
+            booksData[session.book_id] = book;
+          } catch (err) {
+            console.error('Error loading book:', err);
+            booksData[session.book_id] = { title: 'Неизвестно', author: 'Неизвестен' };
+          }
+        }
+      }
+      setBooks(booksData);
+      setSessions(sessionsData);
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateSession = async (sessionData) => {
+    try {
+      const newSession = await createSession(sessionData);
+      navigate(`/session-reader?sessionId=${newSession.id}&name=${encodeURIComponent(newSession.name)}`);
+    } catch (error) {
+      console.error('Error creating session:', error);
+      alert('Ошибка при создании сессии');
+    }
+  };
+
+  return (
+    <>
+      <Header />
+      <div className='flex'>
+        <NavAside />
+        <div className='bg-beige-1 flex flex-col text-accent-2 w-screen p-10'>
+          <div className='flex justify-between'>
+            <div>
+              <h2 className='text-blue text-3xl mb-4'>Мои сессии</h2>
+            </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className='relative bg-accent-1 text-beige-1 rounded-xl h-fit py-4 px-8 pl-10 cursor-pointer'
+            >
+              Создать сессию
+              <svg className='absolute ml-2 left-3 top-1/2 -translate-y-1/2 w-5 h-5' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+              </svg>
+            </button>
+          </div>
+
+          {loading && <div className="text-center py-10">Загрузка...</div>}
+
+          {!loading && sessions.length === 0 && (
+            <div className="text-center py-20 text-gray-500">
+              <p className="text-xl mb-4">У вас пока нет сессий</p>
+              <p>Нажмите "Создать сессию", чтобы начать совместное чтение</p>
+            </div>
+          )}
+
+          <div className='grid grid-cols-2 mt-4 gap-10'>
+            {sessions.map((session) => {
+              const book = books[session.book_id];
+              return (
+                <SessionItem 
+                  key={session.id}
+                  id={session.id}
+                  name={session.name}
+                  book_title={book?.title || 'Загрузка...'}
+                  book_author={book?.author || 'Неизвестен'}
+                  progress={session.progress || 0}
+                  members={session.members || 0}
+                  notes={session.notes || 0}
+                  link={session.link}
+                  role_id={session.role_id}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {showCreateModal && (
+        <CreateSessionModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateSession}
+        />
+      )}
+    </>
+  );
+}

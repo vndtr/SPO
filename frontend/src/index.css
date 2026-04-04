@@ -1,0 +1,104 @@
+@import "tailwindcss";
+@config "../tailwind.config.cjs";
+
+/* Темная тема для читалки */
+.reader-dark {
+  background-color: #1a1a1a;
+  color: #e5e5e5;
+}
+
+.reader-dark p {
+  color: #e5e5e5;
+}
+
+/* Бежевая тема */
+.reader-beige {
+  background-color: #fdf8f2;
+  color: #374151;
+}
+
+/* Светлая тема (по умолчанию) */
+.reader-light {
+  background-color: #ffffff;
+  color: #374151;
+}
+.highlighted-quote {
+  background-color: #fef9c3;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.highlighted-quote:hover {
+  opacity: 0.8;
+}
+
+.highlighted-note {
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  padding-bottom: 2px;
+}
+
+.highlighted-note:hover {
+  opacity: 0.8;
+}
+
+.highlight-flash {
+  animation: flash 1s ease;
+}
+
+.highlighted-quote {
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.highlighted-quote:hover {
+  opacity: 0.8;
+}
+
+.highlighted-note {
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: transparent !important;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  padding-bottom: 2px;
+}
+
+.highlighted-note:hover {
+  opacity: 0.8;
+}
+
+.highlight-flash {
+  animation: flash 1s ease;
+}
+
+.sidebar-transition {
+  transition: width 0.3s ease, min-width 0.3s ease;
+}
+
+.main-content-transition {
+  transition: margin-left 0.3s ease;
+}
+
+.highlighted-note-other {
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px dashed #9ca3af;
+  padding-bottom: 2px;
+}
+
+.highlighted-note-other:hover {
+  opacity: 0.8;
+}
+
+@keyframes flash {
+  0% { background-color: rgba(245, 158, 11, 0.2); }
+  50% { background-color: rgba(245, 158, 11, 0.5); }
+  100% { background-color: transparent; }
+}

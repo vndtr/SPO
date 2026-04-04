@@ -1,0 +1,139 @@
+from fastapi import APIRouter, Depends, File, Request, Form, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+import crud
+import schemas, models
+from deps import get_session
+from .auth_router import get_current_user
+from websocket_manager import manager
+
+session_router = APIRouter(prefix="/session", tags=["session"])
+
+@session_router.post('/')
+async def add_session(
+        session:schemas.SessionCreate,
+        request:Request,
+        db:AsyncSession = Depends(get_session)):
+    db_session = await crud.create_session(session,request.state.user.id, db)
+    await crud.create_participant(request.state.user.id, db_session.id, db)
+
+    return db_session
+@session_router.get('/{session_id}')
+async def get_session_participants(
+        session_id:int,
+        request:Request,
+        db:AsyncSession = Depends(get_session)):
+    participants = await crud.get_participants_by_session_id(session_id, db)
+
+    return participants
+
+
+@session_router.get('/')
+async def get_sessions(
+        request:Request,
+        db:AsyncSession = Depends(get_session)):
+    participants = await crud.get_sessions_by_user_id(request.state.user.id, db)
+
+    return participants
+
+
+
+@session_router.post('/notifications')
+async def get_session_participants(
+        session_notify:schemas.SessionNotifications,
+        requst:Request,
+        db:AsyncSession = Depends(get_session)):
+    result = await crud.get_notifications_by_user_id(offset=session_notify.offset, limit=session_notify.limit, user_id=requst.state.user.id, db=db)
+
+    return result
+
+
+@session_router.post('/{link}', summary="Переход по ссылке добавляет участника в сессию")
+async def join_by_link(
+        link:str,
+        request:Request,
+        session_id:int,
+        db:AsyncSession = Depends(get_session)):
+    session = await crud.get_session_by_link(link, db)
+    await crud.join_participant(request.state.user.id, session_id, db=db)
+
+    return session
+
+@session_router.get('/info/{session_id}')
+async def get_session_info(
+    session_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    session = await db.get(models.Session, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {
+        "id": session.id,
+        "name": session.name,
+        "book_id": session.book_id,
+        "is_active": session.is_active,
+        "link": session.link
+    }
+
+@session_router.put('/{session_id}/users/{user_id}')
+async def update_participant_role(
+    session_id: int,
+    user_id: int,
+    request: Request,
+    role_data: dict,
+    db: AsyncSession = Depends(get_session)
+):
+    # Проверяем, что текущий пользователь - учитель в этой сессии
+    current_user = request.state.user
+    
+    stmt_current = select(models.Session_Participant).where(
+        models.Session_Participant.user_id == current_user.id,
+        models.Session_Participant.session_id == session_id
+    )
+    current_participant = (await db.execute(stmt_current)).scalar_one_or_none()
+    
+    if not current_participant or current_participant.role_id != 2:
+        raise HTTPException(status_code=403, detail="Only teacher can change roles")
+    
+    # Проверяем, что целевой пользователь существует в сессии
+    stmt_target = select(models.Session_Participant).where(
+        models.Session_Participant.user_id == user_id,
+        models.Session_Participant.session_id == session_id
+    )
+    target_participant = (await db.execute(stmt_target)).scalar_one_or_none()
+    
+    if not target_participant:
+        raise HTTPException(status_code=404, detail="User not found in this session")
+    
+    # Нельзя менять роль создателя сессии (того, у кого user_id совпадает с session.user_id)
+    stmt_session = select(models.Session).where(models.Session.id == session_id)
+    session = (await db.execute(stmt_session)).scalar_one_or_none()
+    
+    if session and session.user_id == user_id:
+        raise HTTPException(status_code=403, detail="Cannot change creator's role")
+    
+     # Обновляем роль
+    target_participant.role_id = role_data.get('role_id', 1)
+    
+    try:
+        await db.commit()
+        await db.refresh(target_participant)
+        
+        # Отправляем WebSocket уведомление всем участникам сессии
+        await manager.broadcast(
+            session_id=session_id,
+            message={
+                "type": "role_changed",
+                "user_id": user_id,
+                "new_role_id": target_participant.role_id,
+                "action": "reload"
+            }
+        )
+        
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to update role: {e}")
+    
+    return {"message": "Role updated successfully"}

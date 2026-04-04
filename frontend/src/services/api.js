@@ -1,0 +1,469 @@
+// frontend/src/services/api.js
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:5000';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Добавляем токен к каждому запросу
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ==================== АВТОРИЗАЦИЯ ====================
+
+export const login = async (username, password) => {
+  const formData = new URLSearchParams();
+  formData.append('username', username);
+  formData.append('password', password);
+
+  const response = await api.post('/auth/login', formData, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  return response.data;
+};
+
+export const register = async (userData) => {
+  const response = await api.post('/auth/signup', userData);
+  return response.data;
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const token = localStorage.getItem('access_token');
+    if (!token) return null;
+    const response = await api.post('/auth/verify');
+    if (response.data && response.data.user_id) {
+      return { 
+        user_id: response.data.user_id, 
+        name: response.data.username,
+        role: response.data.role || 'user'
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Get current user error:', error);
+    return null;
+  }
+};
+
+export const logout = () => {
+  localStorage.removeItem('access_token');
+};
+
+// ==================== КНИГИ ====================
+
+export const getBooks = async () => {
+  const response = await api.get('/book/');
+  // Адаптируем данные под формат, ожидаемый фронтендом
+  return response.data.map(book => ({
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    cover_img: book.cover_img,
+    content_path: book.content_path,
+    created_at: book.created_at
+  }));
+};
+
+export const getBookById = async (bookId) => {
+  const response = await api.get(`/book/${bookId}`);
+  return response.data;
+};
+
+export const getBookPage = async (bookId, page) => {
+  try {
+    const book = await getBookById(bookId);
+    if (!book || !book.content_path) {
+      throw new Error('Book not found or no content path');
+    }
+    
+    // Получаем общее количество страниц (кэшируем)
+    let total_pages = 1;
+    const cachedTotal = localStorage.getItem(`book_${bookId}_total_pages`);
+    if (cachedTotal) {
+      total_pages = parseInt(cachedTotal);
+    } else {
+      const allPagesResponse = await api.get(`/books/content/${book.content_path}`, {
+        params: { offset: 0, limit: 100 }
+      });
+      total_pages = Object.keys(allPagesResponse.data).length;
+      localStorage.setItem(`book_${bookId}_total_pages`, total_pages);
+    }
+    
+    // Получаем конкретную страницу
+    const response = await api.get(`/books/content/${book.content_path}`, {
+      params: { offset: page, limit: 1 }
+    });
+    
+    const pageData = response.data;
+    const pageKeys = Object.keys(pageData);
+    
+    if (pageKeys.length === 0) {
+      throw new Error('Page not found');
+    }
+    
+    const pageKey = pageKeys[0];
+    const pageText = pageData[pageKey];
+    
+    const paragraphs = pageText.split(/\n\s*\n/);
+    const formattedHtml = paragraphs
+      .filter(p => p.trim())
+      .map(p => `<p class="mb-4 leading-relaxed">${p.trim()}</p>`)
+      .join('');
+    
+    return {
+      page: page,
+      total_pages: total_pages,
+      content: formattedHtml,
+      full_text: pageText,
+      start_index: page * 3000,
+      end_index: (page + 1) * 3000
+    };
+  } catch (error) {
+    console.error('Error loading page:', error);
+    throw error;
+  }
+};
+
+export const uploadBook = async (file, title, author) => {
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('author', author);
+  formData.append('book_cover', file);
+  formData.append('content', file);
+  
+  const response = await api.post('/book/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const deleteBook = async (bookId) => {
+  const response = await api.delete(`/book/${bookId}`);
+  return response.data;
+};
+
+// ==================== SOLO SESSION (личное чтение) ====================
+
+export const getSoloSession = async (bookId) => {
+  try {
+    const response = await api.get('/solo_session/', {
+      params: { book_id: bookId }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+export const createSoloSession = async (bookId) => {
+  const response = await api.post('/solo_session/create', null, {
+    params: { book_id: bookId }
+  });
+  return response.data;
+};
+
+export const getSoloNotes = async (soloSessionId) => {
+  const response = await api.get(`/solo_session/note/${soloSessionId}`);
+  return response.data;
+};
+
+export const getSoloQuotes = async (soloSessionId) => {
+  const response = await api.get(`/solo_session/quote/${soloSessionId}`);
+  return response.data;
+};
+
+export const getSoloAnnotations = async (soloSessionId) => {
+  const [notes, quotes] = await Promise.all([
+    getSoloNotes(soloSessionId),
+    getSoloQuotes(soloSessionId)
+  ]);
+  return { notes, quotes };
+};
+
+export const createSoloNote = async (data) => {
+  const response = await api.post('/solo_session/note/', data);
+  return response.data;
+};
+
+export const createSoloQuote = async (data) => {
+  const response = await api.post('/solo_session/quote/', data);
+  return response.data;
+};
+
+export const deleteSoloNote = async (noteId, soloSessionId) => {
+  const response = await api.delete('/solo_session/note/', {
+    data: { id: noteId, solo_session_id: soloSessionId }
+  });
+  return response.data;
+};
+
+export const deleteSoloQuote = async (quoteId, soloSessionId) => {
+  const response = await api.delete('/solo_session/quote/', {
+    data: { id: quoteId, solo_session_id: soloSessionId }
+  });
+  return response.data;
+};
+
+export const updateSoloNote = async (data) => {
+  const response = await api.patch('/solo_session/note/', data);
+  return response.data;
+};
+
+// ==================== СЕССИИ (совместное чтение) ====================
+
+export const getSessions = async () => {
+  // GET /session/ — возвращает список Session_Participant с подгруженными session
+  const response = await api.get('/session/');
+  const participants = response.data;
+  
+  // Извлекаем session из каждого participant
+  return participants.map(p => ({
+    id: p.session.id,
+    name: p.session.name,
+    book_id: p.session.book_id,
+    is_active: p.session.is_active,
+    link: p.session.link,
+    role_id: p.role_id,
+    user_id: p.user_id
+  }));
+};
+
+export const createSession = async (data) => {
+  // POST /session/ — создание сессии
+  const response = await api.post('/session/', {
+    name: data.name,
+    book_id: data.book_id
+  });
+  return response.data;
+};
+
+export const getSessionById = async (sessionId) => {
+  const response = await api.get(`/session/info/${sessionId}`);
+  return response.data;
+};
+
+export const getSessionInfo = async (sessionId) => {
+  // Вспомогательная функция — получаем сессию через список сессий
+  const sessions = await getSessions();
+  return sessions.find(s => s.id === parseInt(sessionId));
+};
+
+export const getSessionParticipants = async (sessionId) => {
+  const response = await api.get(`/session/${sessionId}`);
+  return response.data;
+};
+
+export const joinSessionByLink = async (link, sessionId) => {
+  const response = await api.post(`/session/${link}?session_id=${sessionId}`);
+  return response.data;
+};
+
+export const getSessionNotifications = async (offset = 0, limit = 10) => {
+  const response = await api.post('/session/notifications', {
+    offset: offset,
+    limit: limit
+  });
+  return response.data;
+};
+
+// Заметки в сессии
+export const getSessionNotes = async (sessionId) => {
+  const response = await api.get('/session/note/', {
+    params: { session_id: sessionId }
+  });
+  return response.data;
+};
+
+export const getSessionQuotes = async (sessionId) => {
+  const response = await api.get('/session/quote/', {
+    params: { session_id: sessionId }
+  });
+  return response.data;
+};
+
+export const getSessionAnnotations = async (sessionId) => {
+  const [notes, quotes] = await Promise.all([
+    getSessionNotes(sessionId),
+    getSessionQuotes(sessionId)
+  ]);
+  return { notes, quotes };
+};
+
+export const createSessionNote = async (data) => {
+  const response = await api.post('/session/note/create', data);
+  return response.data;
+};
+
+export const createSessionQuote = async (data) => {
+  const response = await api.post('/session/quote/create', data);
+  return response.data;
+};
+export const updateSessionNote = async (data) => {
+  const response = await api.post('/session/note/update', data);
+  return response.data;
+};
+
+export const updateSessionQuote = async (data) => {
+  const response = await api.post('/session/quote/update', data);
+  return response.data;
+};
+
+export const deleteSessionNote = async (noteId, sessionId) => {
+  const response = await api.post('/session/note/delete', {
+    id: noteId,
+    session_id: sessionId
+  });
+  return response.data;
+};
+
+export const deleteSessionQuote = async (quoteId, sessionId) => {
+  const response = await api.post('/session/quote/delete', {
+    id: quoteId,
+    session_id: sessionId
+  });
+  return response.data;
+};
+
+// Ответы
+export const createAnswer = async (noteId, content, sessionId) => {
+  const response = await api.post('/answer/create', {
+    note_id: noteId,
+    content: content,
+    session_id: sessionId
+  });
+  return response.data;
+};
+
+export const getAnswersByNoteId = async (noteId) => {
+    const response = await api.get('/answer/', {
+        params: { note_id: noteId }
+    });
+    return response.data;
+};
+export const updateAnswer = async (answerId, content, sessionId, noteId) => {
+  const response = await api.patch('/answer/update', {
+    id: answerId,
+    content: content,
+    session_id: sessionId,
+    note_id: noteId
+  });
+  return response.data;
+};
+
+export const deleteAnswer = async (answerId, sessionId, noteId) => {
+  const response = await api.post('/answer/delete', {
+    id: answerId,
+    session_id: sessionId,
+    note_id: noteId
+  });
+  return response.data;
+};
+
+
+
+// ==================== НАСТРОЙКИ ====================
+
+export const getReaderSettings = async () => {
+  try {
+    const response = await api.get('/user/profile');
+    // Преобразуем font_size из int в строку для фронтенда
+    let fontSize = 'medium';
+    if (response.data.font_size <= 12) fontSize = 'small';
+    else if (response.data.font_size === 14) fontSize = 'medium';
+    else if (response.data.font_size === 16) fontSize = 'large';
+    else if (response.data.font_size >= 18) fontSize = 'extra-large';
+    
+    return {
+      font_size: fontSize,
+      background_color: response.data.background_color || 'light'
+    };
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    return { font_size: 'medium', background_color: 'light' };
+  }
+};
+
+export const updateReaderSettings = async (settings) => {
+  // Преобразуем font_size из строки в int
+  let fontSize = 14;
+  if (settings.font_size === 'small') fontSize = 12;
+  else if (settings.font_size === 'medium') fontSize = 14;
+  else if (settings.font_size === 'large') fontSize = 16;
+  else if (settings.font_size === 'extra-large') fontSize = 18;
+  
+  const response = await api.patch('/user/', {
+    font_size: fontSize,
+    background_color: settings.background_color
+  });
+  return response.data;
+};
+export const updateParticipantRole = async (sessionId, userId, roleId) => {
+    const response = await api.put(`/session/${sessionId}/users/${userId}`, {
+        role_id: roleId
+    });
+    return response.data;
+};
+// ==================== ПОЛЬЗОВАТЕЛЬ ====================
+
+export const getUserProfile = async () => {
+  const response = await api.get('/user/profile');
+  return {
+    id: response.data.id,
+    name: response.data.name,
+    last_name: response.data.last_name,
+    email: response.data.email,
+    background_color: response.data.background_color,
+    font_size: response.data.font_size
+  };
+};
+
+export const updateUserProfile = async (userData) => {
+  const response = await api.patch('/user/', userData);
+  return response.data;
+};
+
+// ==================== ПОИСК (временное решение) ====================
+// TODO: добавить эндпоинты поиска в бэкенд
+
+export const searchBooks = async (query) => {
+  // Временное решение — фильтруем книги на фронтенде
+  const books = await getBooks();
+  const lowerQuery = query.toLowerCase();
+  return books.filter(book => 
+    book.title.toLowerCase().includes(lowerQuery) || 
+    book.author.toLowerCase().includes(lowerQuery)
+  );
+};
+
+export const searchSessions = async (query) => {
+  // Временное решение — фильтруем сессии на фронтенде
+  const sessions = await getSessions();
+  const lowerQuery = query.toLowerCase();
+  return sessions.filter(session => 
+    session.name.toLowerCase().includes(lowerQuery)
+  );
+};
+
+export const searchAll = async (query) => {
+  const [books, sessions] = await Promise.all([
+    searchBooks(query),
+    searchSessions(query)
+  ]);
+  return { books, sessions };
+};
+
+export default api;
