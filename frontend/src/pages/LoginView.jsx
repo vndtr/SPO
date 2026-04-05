@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../services/api';
+import '../styles/pages/login.css';
 
 export default function LoginView({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -45,25 +46,25 @@ export default function LoginView({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-beige-1">
-      <div className="bg-beige-2 p-8 rounded-2xl shadow-lg w-96">
-        <h2 className="text-2xl font-bold text-blue mb-6">
+    <div className="login-page">
+      <div className="login-card">
+        <h2 className="login-title">
           {isLogin ? 'Вход' : 'Регистрация'}
         </h2>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
+          <div className="login-error">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="login-form">
           <input
             type="text"
             placeholder="Имя пользователя"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-3 mb-3 border border-accent-1/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-1"
+            className="login-input"
             required
           />
 
@@ -74,14 +75,14 @@ export default function LoginView({ onLogin }) {
                 placeholder="Фамилия"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full p-3 mb-3 border border-accent-1/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-1"
+                className="login-input"
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 mb-3 border border-accent-1/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-1"
+                className="login-input"
                 required
               />
             </>
@@ -92,14 +93,14 @@ export default function LoginView({ onLogin }) {
             placeholder="Пароль"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 mb-4 border border-accent-1/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-1"
+            className="login-input"
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent-1 text-beige-1 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="login-button"
           >
             {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
           </button>
@@ -107,7 +108,7 @@ export default function LoginView({ onLogin }) {
 
         <button
           onClick={() => setIsLogin(!isLogin)}
-          className="w-full mt-4 text-accent-1 hover:underline text-sm"
+          className="login-toggle"
         >
           {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
         </button>

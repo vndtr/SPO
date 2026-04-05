@@ -1,6 +1,8 @@
 // frontend/src/components/readerComps/ReaderSettingsModal.jsx
 import React, { useState, useEffect } from 'react';
 import { getUserSettings, updateUserSettings } from '../../services/api';
+import '../../styles/components/modal.css';
+import '../../styles/components/reader.css';
 
 export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
     const [settings, setSettings] = useState({
@@ -31,40 +33,63 @@ export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
     };
 
     const handleSave = async () => {
-    setLoading(true);
-    try {
-        // Сохраняем подсветки перед изменением
-        if (window.preserveHighlights) {
-            window.preserveHighlights();
-        }
-        
-        await updateUserSettings(settings);
-        localStorage.setItem('reader_settings', JSON.stringify(settings));
-        
-        window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings }));
-        
-        if (onSettingsApplied) {
-            onSettingsApplied(settings);
-        }
-        
-        // Восстанавливаем подсветки после применения
-        setTimeout(() => {
-            if (window.restoreHighlights) {
-                window.restoreHighlights();
+        setLoading(true);
+        try {
+            if (window.preserveHighlights) {
+                window.preserveHighlights();
             }
-            if (window.refreshAllHighlights) {
-                window.refreshAllHighlights();
+            
+            await updateUserSettings(settings);
+            localStorage.setItem('reader_settings', JSON.stringify(settings));
+            
+            // Применяем тему ко всему body
+            applyThemeToBody(settings.background_color);
+            
+            window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings }));
+            
+            if (onSettingsApplied) {
+                onSettingsApplied(settings);
             }
-        }, 100);
+            
+            setTimeout(() => {
+                if (window.restoreHighlights) {
+                    window.restoreHighlights();
+                }
+                if (window.refreshAllHighlights) {
+                    window.refreshAllHighlights();
+                }
+            }, 100);
+            
+            onClose();
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            alert('Ошибка при сохранении настроек');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Функция для применения темы ко всему body
+    const applyThemeToBody = (theme) => {
+        // Удаляем старые классы
+        document.body.classList.remove('reader-theme-light', 'reader-theme-dark', 'reader-theme-beige');
         
-        onClose();
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        alert('Ошибка при сохранении настроек');
-    } finally {
-        setLoading(false);
-    }
-};
+        // Добавляем новый класс
+        document.body.classList.add(`reader-theme-${theme}`);
+        
+        // Сохраняем в localStorage
+        localStorage.setItem('reader_theme', theme);
+    };
+
+    // Применяем тему при загрузке компонента
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('reader_theme') || 'light';
+        if (savedTheme !== settings.background_color) {
+            setSettings(prev => ({ ...prev, background_color: savedTheme }));
+        } else {
+            applyThemeToBody(settings.background_color);
+        }
+    }, []);
 
     const fontSizes = [
         { value: 12, label: 'Маленький', previewClass: 'text-xs' },
@@ -79,47 +104,43 @@ export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
         { value: 'beige', label: 'Бежевый', bgClass: 'bg-amber-50', textClass: 'text-gray-700', previewBg: '#f5f0e8' }
     ];
 
- 
+    const handleClose = () => {
+        if (window.preserveHighlights) {
+            window.preserveHighlights();
+        }
+        onClose();
+        setTimeout(() => {
+            if (window.restoreHighlights) {
+                window.restoreHighlights();
+            }
+            if (window.refreshAllHighlights) {
+                window.refreshAllHighlights();
+            }
+        }, 50);
+    };
 
-const handleClose = () => {
-    // Сохраняем подсветки перед закрытием
-    if (window.preserveHighlights) {
-        window.preserveHighlights();
-    }
-    
-    onClose();
-    
-    // Восстанавливаем подсветки после закрытия
-    setTimeout(() => {
-        if (window.restoreHighlights) {
-            window.restoreHighlights();
-        }
-        if (window.refreshAllHighlights) {
-            window.refreshAllHighlights();
-        }
-    }, 50);
-};
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-[10000]" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/50"></div>
-            <div 
-                className="bg-beige-1 p-6 rounded-2xl max-w-md w-full text-blue flex flex-col gap-4 border border-accent-1 shadow-2xl relative z-[10001]"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <h3 className="text-xl font-medium">Настройки читалки</h3>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-backdrop"></div>
+            <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h3 className="modal-title">Настройки читалки</h3>
+                    <button onClick={handleClose} className="modal-close">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
                 
-                {/* Размер шрифта */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">Размер шрифта</label>
-                    <div className="grid grid-cols-2 gap-2">
+                <div className="form-group">
+                    <label className="form-label">Размер шрифта</label>
+                    <div className="settings-font-grid">
                         {fontSizes.map(size => (
                             <button
                                 key={size.value}
                                 onClick={() => handleFontSizeChange(size.value)}
-                                className={`p-3 rounded-xl border-2 transition-all ${size.previewClass} ${
-                                    settings.font_size === size.value
-                                        ? 'border-accent-1 bg-accent-1/10'
-                                        : 'border-accent-1/30 hover:border-accent-1/50'
+                                className={`settings-option ${size.previewClass} ${
+                                    settings.font_size === size.value ? 'settings-option-active' : ''
                                 }`}
                             >
                                 {size.label}
@@ -128,18 +149,15 @@ const handleClose = () => {
                     </div>
                 </div>
 
-                {/* Цвет фона */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">Цвет фона</label>
-                    <div className="grid grid-cols-3 gap-2">
+                <div className="form-group">
+                    <label className="form-label">Цвет фона</label>
+                    <div className="settings-bg-grid">
                         {bgColors.map(color => (
                             <button
                                 key={color.value}
                                 onClick={() => handleBgColorChange(color.value)}
-                                className={`p-3 rounded-xl border-2 transition-all ${color.bgClass} ${color.textClass} ${
-                                    settings.background_color === color.value
-                                        ? 'border-accent-1 ring-2 ring-accent-1/50'
-                                        : 'border-accent-1/30'
+                                className={`settings-bg-option ${color.bgClass} ${color.textClass} ${
+                                    settings.background_color === color.value ? 'settings-bg-option-active' : ''
                                 }`}
                             >
                                 {color.label}
@@ -148,27 +166,18 @@ const handleClose = () => {
                     </div>
                 </div>
 
-                {/* Предпросмотр */}
-                <div className="mt-2 p-3 rounded-xl border border-accent-1/30" style={{ backgroundColor: bgColors.find(c => c.value === settings.background_color)?.previewBg }}>
-                    <p className="text-sm text-gray-600 mb-1">Предпросмотр:</p>
+                <div className="settings-preview" style={{ backgroundColor: bgColors.find(c => c.value === settings.background_color)?.previewBg }}>
+                    <p className="preview-label">Предпросмотр:</p>
                     <p style={{ fontSize: `${settings.font_size}px` }}>
                         Это пример текста с выбранными настройками.
                     </p>
                 </div>
 
-                {/* Кнопки */}
-                <div className="flex gap-4 justify-end mt-4">
-                    <button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="px-4 py-2 bg-accent-1 text-beige-1 rounded-xl hover:opacity-90 transition disabled:opacity-50"
-                    >
+                <div className="form-actions">
+                    <button onClick={handleSave} disabled={loading} className="form-button-submit">
                         {loading ? 'Сохранение...' : 'Сохранить'}
                     </button>
-                    <button
-                        onClick={handleClose}
-                        className="px-4 py-2 border border-accent-1 text-accent-1 rounded-xl hover:bg-accent-1/10 transition"
-                    >
+                    <button onClick={handleClose} className="form-button-cancel">
                         Отмена
                     </button>
                 </div>

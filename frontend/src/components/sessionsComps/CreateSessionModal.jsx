@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getBooks } from '../../services/api';
+import '../../styles/components/modal.css';
 
 export default function CreateSessionModal({ onClose, onCreate }) {
   const [books, setBooks] = useState([]);
@@ -52,15 +53,15 @@ export default function CreateSessionModal({ onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[10000]" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50"></div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-backdrop"></div>
       <div 
-        className="bg-beige-1 p-6 rounded-2xl max-w-md w-full text-blue flex flex-col gap-4 border border-accent-1 shadow-2xl relative z-[10001]"
+        className="modal-container"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-medium">Создание сессии</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+        <div className="modal-header">
+          <h3 className="modal-title">Создание сессии</h3>
+          <button onClick={onClose} className="modal-close">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
@@ -68,30 +69,30 @@ export default function CreateSessionModal({ onClose, onCreate }) {
         </div>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+          <div className="modal-error">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Название сессии</label>
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="form-group">
+            <label className="form-label">Название сессии</label>
             <input
               type="text"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
               placeholder="Например: Обсуждение главы 1"
-              className="w-full p-3 border border-accent-1/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-1"
+              className="form-input"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Книга</label>
+          <div className="form-group">
+            <label className="form-label">Книга</label>
             <select
               value={selectedBookId}
               onChange={(e) => setSelectedBookId(e.target.value)}
-              className="w-full p-3 border border-accent-1/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-1"
+              className="form-select"
             >
               {books.map(book => (
                 <option key={book.id} value={book.id}>
@@ -101,18 +102,18 @@ export default function CreateSessionModal({ onClose, onCreate }) {
             </select>
           </div>
 
-          <div className="flex gap-4 justify-end mt-2">
+          <div className="form-actions">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-accent-1 text-accent-1 rounded-xl hover:bg-accent-1/10"
+              className="form-button-cancel"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-accent-1 text-beige-1 rounded-xl hover:opacity-90 disabled:opacity-50"
+              className="form-button-submit"
             >
               {loading ? 'Создание...' : 'Создать сессию'}
             </button>

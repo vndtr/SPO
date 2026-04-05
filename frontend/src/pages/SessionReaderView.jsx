@@ -21,10 +21,11 @@ import {
   getSessionParticipants,
   joinSessionByLink,
   getSessionAnnotations,
-   getUserSettings,
-    updateUserSettings,
-    leaveSession
+  getUserSettings,
+  updateUserSettings,
+  leaveSession
 } from '../services/api';
+import '../styles/pages/reader.css';
 
 export default function SessionReaderView() {
   const [searchParams] = useSearchParams();
@@ -46,34 +47,32 @@ export default function SessionReaderView() {
   const [userRole, setUserRole] = useState(null);
   const [readerSettings, setReaderSettings] = useState(null);
   const [showParticipants, setShowParticipants] = useState(false);
-const [showSettingsModal, setShowSettingsModal] = useState(false);
-const [highlightedNoteId, setHighlightedNoteId] = useState(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [highlightedNoteId, setHighlightedNoteId] = useState(null);
   const menuRef = useRef(null);
   const wsRef = useRef(null);
   const navigate = useNavigate();
 
-
   const refreshAnnotations = async () => {
     if (!session?.id) return;
     try {
-        const data = await getSessionAnnotations(session.id);
-        const notes = (data.notes || []).map(n => ({ 
-            ...n, 
-            type: 'note',
-            author_id: n.author_id,
-            author: { id: n.author_id, name: n.author_name, role: n.author_role }
-        }));
-        const quotes = (data.quotes || []).map(q => ({ ...q, type: 'quote' }));
-        const allAnnotations = [...notes, ...quotes];
-        
-        // Обновляем через глобальную функцию
-        if (window.updateBookReaderAnnotations) {
-            window.updateBookReaderAnnotations(allAnnotations);
-        }
+      const data = await getSessionAnnotations(session.id);
+      const notes = (data.notes || []).map(n => ({ 
+        ...n, 
+        type: 'note',
+        author_id: n.author_id,
+        author: { id: n.author_id, name: n.author_name, role: n.author_role }
+      }));
+      const quotes = (data.quotes || []).map(q => ({ ...q, type: 'quote' }));
+      const allAnnotations = [...notes, ...quotes];
+      
+      if (window.updateBookReaderAnnotations) {
+        window.updateBookReaderAnnotations(allAnnotations);
+      }
     } catch (err) {
-        console.error('Error refreshing annotations:', err);
+      console.error('Error refreshing annotations:', err);
     }
-};
+  };
 
   useEffect(() => {
     loadData();
@@ -82,30 +81,29 @@ const [highlightedNoteId, setHighlightedNoteId] = useState(null);
   const loadData = async () => {
     setLoading(true);
     try {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      
+      if (sessionId) {
+        const sessionData = await getSessionById(sessionId);
+        setSession(sessionData);
         
-        if (sessionId) {
-            const sessionData = await getSessionById(sessionId);
-            setSession(sessionData);
-            
-            const participants = await getSessionParticipants(sessionId);
-            const currentParticipant = participants.find(p => p.user_id === user?.user_id);
-            setUserRole(currentParticipant?.role_id === 2 ? 'teacher' : 'student');
-            
-            if (link && !currentParticipant) {
-                await joinSessionByLink(link, sessionId);
-            }
-            
-
-            await refreshAnnotations();
+        const participants = await getSessionParticipants(sessionId);
+        const currentParticipant = participants.find(p => p.user_id === user?.user_id);
+        setUserRole(currentParticipant?.role_id === 2 ? 'teacher' : 'student');
+        
+        if (link && !currentParticipant) {
+          await joinSessionByLink(link, sessionId);
         }
+        
+        await refreshAnnotations();
+      }
     } catch (error) {
-        console.error('Error loading data:', error);
+      console.error('Error loading data:', error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   const handleTextSelected = (data) => {
     setSelectedText(data.text);
@@ -126,91 +124,76 @@ const [highlightedNoteId, setHighlightedNoteId] = useState(null);
 
   const loadSettings = async () => {
     try {
-        const settings = await getUserSettings();
-        setReaderSettings(settings);
+      const settings = await getUserSettings();
+      setReaderSettings(settings);
     } catch (error) {
-        console.error('Error loading settings:', error);
+      console.error('Error loading settings:', error);
     }
-};
+  };
 
-useEffect(() => {
+  useEffect(() => {
     if (currentUser) {
-        loadSettings();
+      loadSettings();
     }
-}, [currentUser]);
+  }, [currentUser]);
 
-useEffect(() => {
+  useEffect(() => {
     const handleSettingsChange = (event) => {
-        if (event.detail) {
-            setReaderSettings(event.detail);
-        }
+      if (event.detail) {
+        setReaderSettings(event.detail);
+      }
     };
     
     window.addEventListener('settingsChanged', handleSettingsChange);
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
-}, []);
+  }, []);
 
-// frontend/src/pages/SessionReaderView.jsx
-console.log('Highlight note ID from URL:', highlightNoteId);
-
-useEffect(() => {
+  useEffect(() => {
     if (highlightNoteId) {
-        console.log('Setting highlighted note ID:', highlightNoteId);
-        setHighlightedNoteId(parseInt(highlightNoteId));
-        // Сбрасываем параметр из URL
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('highlightNoteId');
-        window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
+      setHighlightedNoteId(parseInt(highlightNoteId));
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('highlightNoteId');
+      window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
     }
-}, [highlightNoteId]);
+  }, [highlightNoteId]);
 
-useEffect(() => {
+  useEffect(() => {
     if (highlightedNoteId && !loading) {
-        console.log('Scrolling to note:', highlightedNoteId);
-        setTimeout(() => {
-            scrollToNote(highlightedNoteId);
-        }, 1000);
+      setTimeout(() => {
+        scrollToNote(highlightedNoteId);
+      }, 1000);
     }
-}, [highlightedNoteId, loading]);
+  }, [highlightedNoteId, loading]);
 
-const scrollToNote = (noteId) => {
-    console.log('Looking for element:', `note-${noteId}`);
+  const scrollToNote = (noteId) => {
     const noteElement = document.getElementById(`note-${noteId}`);
-    console.log('Found element:', noteElement);
     
     if (noteElement) {
-        noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        noteElement.classList.add('highlight-flash');
-        setTimeout(() => {
-            noteElement.classList.remove('highlight-flash');
-        }, 2000);
-    const showRepliesButton = noteElement.querySelector('.show-replies-button');
-    if (showRepliesButton && showRepliesButton.textContent.includes('Показать ответы')) {
-            showRepliesButton.click();
-        }
-    
+      noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      noteElement.classList.add('highlight-flash');
+      setTimeout(() => {
+        noteElement.classList.remove('highlight-flash');
+      }, 2000);
+      const showRepliesButton = noteElement.querySelector('.show-replies-button');
+      if (showRepliesButton && showRepliesButton.textContent.includes('Показать ответы')) {
+        showRepliesButton.click();
+      }
     } else {
-        // Если элемент не найден, пробуем найти после загрузки аннотаций
-        setTimeout(() => {
-            const retryElement = document.getElementById(`note-${noteId}`);
-            if (retryElement) {
-                retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                retryElement.classList.add('highlight-flash');
-                setTimeout(() => {
-                    retryElement.classList.remove('highlight-flash');
-                }, 2000);
-            }
-        }, 500);
+      setTimeout(() => {
+        const retryElement = document.getElementById(`note-${noteId}`);
+        if (retryElement) {
+          retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          retryElement.classList.add('highlight-flash');
+          setTimeout(() => {
+            retryElement.classList.remove('highlight-flash');
+          }, 2000);
+        }
+      }, 500);
     }
-};
+  };
 
   const handleQuote = async (color) => {
-    
-  
-  if (!pendingSelection || !session || !currentUser) {
-   
-    return;
-  }
+    if (!pendingSelection || !session || !currentUser) return;
     
     try {
       const quoteData = {
@@ -299,158 +282,144 @@ const scrollToNote = (noteId) => {
 
   const handleSettingsApplied = (newSettings) => {
     setReaderSettings(newSettings);
-};
-// Функция выхода из сессии
-const handleLeaveSession = async () => {
+  };
+
+  const handleLeaveSession = async () => {
     const isCreator = userRole === 'teacher' && session?.user_id === currentUser?.user_id;
     const confirmMessage = isCreator 
-        ? "Вы создатель этой сессии. При выходе сессия будет полностью удалена для всех участников. Вы уверены?"
-        : "Вы уверены, что хотите покинуть эту сессию? Все ваши заметки и ответы будут удалены.";
+      ? "Вы создатель этой сессии. При выходе сессия будет полностью удалена для всех участников. Вы уверены?"
+      : "Вы уверены, что хотите покинуть эту сессию? Все ваши заметки и ответы будут удалены.";
     
-    if (!window.confirm(confirmMessage)) {
-        return;
-    }
+    if (!window.confirm(confirmMessage)) return;
     
     try {
-        const result = await leaveSession(session.id);
-        
-        if (result.is_creator) {
+      const result = await leaveSession(session.id);
+      
+      if (result.is_creator) {
         alert("Сессия успешно удалена");
-        // Отправляем событие для обновления списка сессий у всех участников
         window.dispatchEvent(new CustomEvent('sessionsUpdated'));
-    } else {
+      } else {
         alert("Вы покинули сессию");
         window.dispatchEvent(new CustomEvent('sessionsUpdated'));
-    }
-    
-    navigate('/sessions');
-        
-        // Перенаправляем на главную страницу или страницу сессий
-        navigate('/sessions');
+      }
+      
+      navigate('/sessions');
     } catch (error) {
-        console.error('Error leaving session:', error);
-        alert("Ошибка при выходе из сессии");
+      console.error('Error leaving session:', error);
+      alert("Ошибка при выходе из сессии");
     }
-};
+  };
 
   const openEditModal = (id, type, currentColor, currentComment, selectedText, currentVisibility, startIndex, endIndex) => {
-  if (type !== 'note') {
-    alert('Редактирование доступно только для заметок');
-    return;
-  }
-  setEditingNote({ 
-    id, 
-    color: currentColor, 
-    comment: currentComment, 
-    selected_text: selectedText, 
-    visibility: currentVisibility,
-    start_index: startIndex,
-    end_index: endIndex
-  });
-};
+    if (type !== 'note') {
+      alert('Редактирование доступно только для заметок');
+      return;
+    }
+    setEditingNote({ 
+      id, 
+      color: currentColor, 
+      comment: currentComment, 
+      selected_text: selectedText, 
+      visibility: currentVisibility,
+      start_index: startIndex,
+      end_index: endIndex
+    });
+  };
 
   const handleEditNote = async (color, comment, visibility) => {
-  if (!editingNote) return;
-  
-  try {
-    const updateData = {
-      id: editingNote.id,
-      session_id: session.id,
-      comment: comment,
-      color: color,
-      is_private: visibility === 'private',
-      selected_text: editingNote.selected_text,
-      start_index: editingNote.start_index,
-      end_index: editingNote.end_index
-    };
+    if (!editingNote) return;
     
-    await updateSessionNote(updateData);
-    
-    // Обновляем аннотацию в состоянии BookReader
-    if (window.updateAnnotationInState) {
-      window.updateAnnotationInState(editingNote.id, color, comment, visibility);
+    try {
+      const updateData = {
+        id: editingNote.id,
+        session_id: session.id,
+        comment: comment,
+        color: color,
+        is_private: visibility === 'private',
+        selected_text: editingNote.selected_text,
+        start_index: editingNote.start_index,
+        end_index: editingNote.end_index
+      };
+      
+      await updateSessionNote(updateData);
+      
+      if (window.updateAnnotationInState) {
+        window.updateAnnotationInState(editingNote.id, color, comment, visibility);
+      }
+      
+      if (window.refreshAllHighlights) {
+        setTimeout(() => {
+          window.refreshAllHighlights();
+        }, 50);
+      }
+      
+      setEditingNote(null);
+      window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
+      
+    } catch (error) {
+      console.error('Error editing note:', error);
+      alert('Ошибка при редактировании');
     }
-    
-    // Перерисовываем все подсветки
-    if (window.refreshAllHighlights) {
-      setTimeout(() => {
-        window.refreshAllHighlights();
-      }, 50);
-    }
-    
-    setEditingNote(null);
-    window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
-    
-  } catch (error) {
-    console.error('Error editing note:', error);
-    alert('Ошибка при редактировании');
-  }
-};
+  };
 
   const handleDeleteAnnotation = async (id, type) => {
     if (!window.confirm('Вы уверены, что хотите удалить эту аннотацию?')) return;
     
     try {
-        if (type === 'note') {
-            await deleteSessionNote(id, session.id);
-        } else {
-            await deleteSessionQuote(id, session.id);
+      if (type === 'note') {
+        await deleteSessionNote(id, session.id);
+      } else {
+        await deleteSessionQuote(id, session.id);
+      }
+      
+      if (window.removeHighlightFromPage) {
+        window.removeHighlightFromPage(id);
+      }
+      
+      window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
+      
+      if (window.updateBookReaderAnnotations) {
+        const data = await getSessionAnnotations(session.id);
+        const notes = (data.notes || []).map(n => ({ 
+          ...n, 
+          type: 'note',
+          author_id: n.author_id,
+          author: { id: n.author_id, name: n.author_name, role: n.author_role }
+        }));
+        const quotes = (data.quotes || []).map(q => ({ ...q, type: 'quote' }));
+        const allAnnotations = [...notes, ...quotes];
+        
+        window.updateBookReaderAnnotations(allAnnotations);
+      }
+      
+      setTimeout(() => {
+        if (window.refreshAllHighlights) {
+          window.refreshAllHighlights();
         }
-        
-        // Удаляем подсветку из текста
-        if (window.removeHighlightFromPage) {
-            window.removeHighlightFromPage(id);
-        }
-        
-        // Обновляем аннотации в боковой панели через глобальное событие
-        window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
-        
-        // Обновляем аннотации в BookReader
-        if (window.updateBookReaderAnnotations) {
-            // Получаем свежий список аннотаций
-            const data = await getSessionAnnotations(session.id);
-            const notes = (data.notes || []).map(n => ({ 
-                ...n, 
-                type: 'note',
-                author_id: n.author_id,
-                author: { id: n.author_id, name: n.author_name, role: n.author_role }
-            }));
-            const quotes = (data.quotes || []).map(q => ({ ...q, type: 'quote' }));
-            const allAnnotations = [...notes, ...quotes];
-            
-            window.updateBookReaderAnnotations(allAnnotations);
-        }
-        
-        // Перерисовываем подсветки
-        setTimeout(() => {
-            if (window.refreshAllHighlights) {
-                window.refreshAllHighlights();
-            }
-        }, 100);
-        
+      }, 100);
+      
     } catch (error) {
-        console.error('Error deleting annotation:', error);
-        alert('Ошибка при удалении: ' + (error.response?.data?.detail || error.message));
+      console.error('Error deleting annotation:', error);
+      alert('Ошибка при удалении: ' + (error.response?.data?.detail || error.message));
     }
-};
+  };
 
-const handleShowParticipants = () => {
+  const handleShowParticipants = () => {
     setShowParticipants(true);
-};
+  };
 
   const handleAddReply = async (noteId, replyText) => {
     try {
       await createAnswer(noteId, replyText, session.id);
       refreshAnnotations();
-      // Обновляем ответы конкретной заметки
-        if (window.refreshNoteAnswers) {
-            window.refreshNoteAnswers(noteId);
-        }
+      if (window.refreshNoteAnswers) {
+        window.refreshNoteAnswers(noteId);
+      }
     } catch (error) {
-        console.error('Error creating reply:', error);
-        alert('Ошибка при создании ответа');
+      console.error('Error creating reply:', error);
+      alert('Ошибка при создании ответа');
     }
-};
+  };
 
   const handleAnnotationClick = async (annotationId, startIndex) => {
     if (window.scrollToAnnotation) {
@@ -459,36 +428,32 @@ const handleShowParticipants = () => {
   };
 
   const handleToggleSidebar = () => {
-  setIsSidebarOpen(!isSidebarOpen);
-  
-  // После изменения видимости панели перерисовываем подсветки
-  setTimeout(() => {
-    if (window.refreshAllHighlights) {
-      window.refreshAllHighlights();
-    }
-  }, 100);
-};
+    setIsSidebarOpen(!isSidebarOpen);
+    
+    setTimeout(() => {
+      if (window.refreshAllHighlights) {
+        window.refreshAllHighlights();
+      }
+    }, 100);
+  };
 
-
-
-const refreshParticipants = async () => {
+  const refreshParticipants = async () => {
     if (!session?.id) return;
     try {
-        const participants = await getSessionParticipants(session.id);
-        const currentParticipant = participants.find(p => p.user_id === currentUser?.user_id);
-        setUserRole(currentParticipant?.role_id === 2 ? 'teacher' : 'student');
+      const participants = await getSessionParticipants(session.id);
+      const currentParticipant = participants.find(p => p.user_id === currentUser?.user_id);
+      setUserRole(currentParticipant?.role_id === 2 ? 'teacher' : 'student');
     } catch (error) {
-        console.error('Error refreshing participants:', error);
+      console.error('Error refreshing participants:', error);
     }
-};
+  };
 
-// Добавьте глобальную функцию для доступа из ParticipantsModal
-useEffect(() => {
+  useEffect(() => {
     window.refreshParticipants = refreshParticipants;
     return () => {
-        delete window.refreshParticipants;
+      delete window.refreshParticipants;
     };
-}, [session?.id, currentUser?.user_id]);
+  }, [session?.id, currentUser?.user_id]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -502,98 +467,93 @@ useEffect(() => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
   useEffect(() => {
     const handleUpdate = () => {
-        // Обновляем данные через перезагрузку аннотаций в SessionReaderAside
-        window.dispatchEvent(new CustomEvent('forceReloadAnnotations'));
+      window.dispatchEvent(new CustomEvent('forceReloadAnnotations'));
     };
     
     window.addEventListener('sessionAnnotationsUpdated', handleUpdate);
     return () => window.removeEventListener('sessionAnnotationsUpdated', handleUpdate);
-}, [sessionId]);
+  }, [sessionId]);
 
-  // WebSocket для real-time обновлени
-
-useEffect(() => {
+  useEffect(() => {
     if (!session?.id) return;
     
     const token = localStorage.getItem('access_token');
     if (!token) {
-        console.error('No token for WebSocket');
-        return;
+      console.error('No token for WebSocket');
+      return;
     }
     
-    const ws = new WebSocket(`ws://localhost:5000/ws/session/${session.id}?token=${encodeURIComponent(token)}`);
+    const ws = new WebSocket(`ws://localhost:5001/ws/session/${session.id}?token=${encodeURIComponent(token)}`);
     
     ws.onopen = () => {
-        console.log('WebSocket connected');
+      console.log('WebSocket connected');
     };
     
     ws.onmessage = (event) => {
-    try {
+      try {
         const data = JSON.parse(event.data);
         console.log('WebSocket message received:', data);
         
         if (data.type === 'role_changed') {
-            if (data.user_id === currentUser?.user_id) {
-                setUserRole(data.new_role_id === 2 ? 'teacher' : 'student');
-            }
-            if (window.refreshParticipants) {
-                window.refreshParticipants();
-            }
+          if (data.user_id === currentUser?.user_id) {
+            setUserRole(data.new_role_id === 2 ? 'teacher' : 'student');
+          }
+          if (window.refreshParticipants) {
+            window.refreshParticipants();
+          }
         }
 
-         if (data.type === 'session_deleted') {
-            alert("Создатель сессии удалил эту сессию");
-            navigate('/sessions');
-            window.dispatchEvent(new CustomEvent('sessionsUpdated'));
+        if (data.type === 'session_deleted') {
+          alert("Создатель сессии удалил эту сессию");
+          navigate('/sessions');
+          window.dispatchEvent(new CustomEvent('sessionsUpdated'));
         }
         
         if (data.type === 'participant_left') {
-            // Обновляем список участников
-            if (window.refreshParticipants) {
-                window.refreshParticipants();
-            }
+          if (window.refreshParticipants) {
+            window.refreshParticipants();
+          }
         }
         
         refreshAnnotations();
-    } catch (e) {
+      } catch (e) {
         console.error('Error parsing WebSocket message:', e);
-    }
-};
+      }
+    };
     
     ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      console.error('WebSocket error:', error);
     };
     
     ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+      console.log('WebSocket disconnected:', event.code, event.reason);
     };
     
     wsRef.current = ws;
     
     return () => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.close();
-        }
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
     };
-}, [session?.id]);
+  }, [session?.id]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">Загрузка...</div>
+      <div className="reader-loading">
+        <div className="reader-loading-text">Загрузка...</div>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-red-500">
-          <p>Сессия не найдена</p>
-          <button onClick={() => window.history.back()} className="mt-4 px-4 py-2 bg-accent-1 text-beige-1 rounded">
+      <div className="reader-loading">
+        <div className="reader-error">
+          <p className="reader-error-message">Сессия не найдена</p>
+          <button onClick={() => window.history.back()} className="reader-error-button">
             Вернуться
           </button>
         </div>
@@ -601,24 +561,22 @@ useEffect(() => {
     );
   }
 
-
   return (
-    
-    <div className='relative h-screen flex flex-col'>
+    <div className="reader-container">
       <ReaderHeader 
         isSession={true}
-    onToggleSidebar={handleToggleSidebar}
-    isSidebarOpen={isSidebarOpen}
-    bookTitle={sessionName}
-    sessionId={session.id}
-    currentUserId={currentUser?.user_id}
-    onShowParticipants={handleShowParticipants}
-    globalSettings={readerSettings} 
-    onSettingsClick={() => setShowSettingsModal(true)} 
-     onLeaveSession={handleLeaveSession}
+        onToggleSidebar={handleToggleSidebar}
+        isSidebarOpen={isSidebarOpen}
+        bookTitle={sessionName}
+        sessionId={session.id}
+        currentUserId={currentUser?.user_id}
+        onShowParticipants={handleShowParticipants}
+        globalSettings={readerSettings} 
+        onSettingsClick={() => setShowSettingsModal(true)} 
+        onLeaveSession={handleLeaveSession}
       />
       
-      <div className='flex flex-1 min-h-0'>
+      <div className="reader-layout">
         {isSidebarOpen && (
           <SessionReaderAside 
             showNoteModal={showNoteModal}
@@ -633,17 +591,18 @@ useEffect(() => {
             userRole={userRole}
             onEditAnnotation={openEditModal}
             highlightedNoteId={highlightedNoteId}
+            isSidebarOpen={isSidebarOpen}
           />
         )}
 
-    <main 
-    className="flex-1  p-10 overflow-y-auto" 
-    style={{ 
-        backgroundColor: readerSettings?.background_color === 'dark' ? '#2a2a2a' 
-            : readerSettings?.background_color === 'beige' ? '#f5f0e8' 
-            : '#ffffff'
-    }}
->
+        <main 
+          className="reader-main"
+          style={{ 
+            backgroundColor: readerSettings?.background_color === 'dark' ? '#2a2a2a' 
+              : readerSettings?.background_color === 'beige' ? '#f5f0e8' 
+              : '#ffffff'
+          }}
+        >
           <ErrorBoundary>
             <BookReader 
               bookId={session.book_id}
@@ -651,7 +610,7 @@ useEffect(() => {
               sessionId={session.id}
               onTextSelected={handleTextSelected}
               onAnnotationClick={handleAnnotationClick}
-               settings={readerSettings}
+              settings={readerSettings}
               currentUser={currentUser}
             />
           </ErrorBoundary>
@@ -672,7 +631,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Модальное окно для создания заметки */}
       {showNoteModal && (
         <SessionReaderModal
           onClose={handleCloseNoteModal}
@@ -682,7 +640,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Модальное окно для редактирования заметки */}
       {editingNote && (
         <SessionReaderModal
           onClose={() => setEditingNote(null)}
@@ -694,29 +651,28 @@ useEffect(() => {
           isEdit={true}
         />
       )}
-      {/* Модальное окно участников */}
 
-{showParticipants && (
-    <ParticipantsModal 
-        sessionId={session.id}
-        currentUserId={currentUser?.user_id}
-        onClose={() => {
+      {showParticipants && (
+        <ParticipantsModal 
+          sessionId={session.id}
+          currentUserId={currentUser?.user_id}
+          onClose={() => {
             setShowParticipants(false);
-            // Восстанавливаем подсветки после закрытия
             setTimeout(() => {
-                if (window.refreshAllHighlights) {
-                    window.refreshAllHighlights();
-                }
+              if (window.refreshAllHighlights) {
+                window.refreshAllHighlights();
+              }
             }, 50);
-        }}
-    />
-)}
-{showSettingsModal && (
-    <ReaderSettingsModal
-        onClose={() => setShowSettingsModal(false)}
-        onSettingsApplied={handleSettingsApplied}
-    />
-)}
+          }}
+        />
+      )}
+      
+      {showSettingsModal && (
+        <ReaderSettingsModal
+          onClose={() => setShowSettingsModal(false)}
+          onSettingsApplied={handleSettingsApplied}
+        />
+      )}
     </div>
   );
 }

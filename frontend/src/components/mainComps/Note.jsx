@@ -1,8 +1,10 @@
-import React from 'react'
+import React from 'react';
+import '../../styles/components/annotations.css';
 
-export default function Note({name, text}) {
+export default function Note({ name, text }) {
   return (
-    <li
-    className="relative before:content-['•'] before:text-blue before:text-1xl before:absolute before:-left-4">{text}</li>
-  )
+    <li className="note-item">
+      {text}
+    </li>
+  );
 }

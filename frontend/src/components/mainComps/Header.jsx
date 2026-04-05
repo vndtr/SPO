@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { searchAll } from '../../services/api';
+import '../../styles/components/header.css';
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +21,6 @@ export default function Header() {
         setShowResults(false);
       }
     }, 500);
-
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
 
@@ -30,16 +30,16 @@ export default function Header() {
     
     setLoading(true);
     try {
-        const results = await searchAll(searchQuery);
-        console.log('Search results:', results);
-        setSearchResults(results);
-        setShowResults(true);
+      const results = await searchAll(searchQuery);
+      console.log('Search results:', results);
+      setSearchResults(results);
+      setShowResults(true);
     } catch (error) {
-        console.error('Search error:', error);
+      console.error('Search error:', error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   const handleResultClick = (result, type) => {
     setShowResults(false);
@@ -64,16 +64,10 @@ export default function Header() {
   }, []);
 
   return (
-    <div className='flex text-accent-2'>
-      <div className='max-w-[30vw] min-w-[15vw] flex justify-center bg-gray items-center'>
-        <Link to='/'>
-          <svg
-            className="w-32 h-32 text-beige-1"
-            viewBox="0 0 881.3 192.21"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-          >
-            {/* SVG логотип */}
+    <header className="header">
+      <div className="header-logo-area">
+        <Link to="/" className="header-logo-link">
+          <svg className="header-logo-svg" viewBox="0 0 881.3 192.21" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
             <g>
               <path d="M.45,113.21c3.55,2.61,50.38,3.65,71.89-6.55,21.75-10.32,32.74-22.84,52.74-27.27,33.59-7.43,65.4,13.4,62,12.53-7.53-1.94-27.07-9.66-58.34.83-14.31,4.8-18.48,7.51-35.06,17.37-21.2,12.6-31.33,15.23-51.12,16.05-23.08.96-46.08-15.88-42.1-12.95Z"/>
               <path d="M94.12,126.97c3.55,2.61,50.38,3.65,71.89-6.55,21.75-10.32,32.74-22.84,52.74-27.27,33.59-7.43,65.4,13.4,62,12.53-7.53-1.94-27.07-9.66-58.34.83-14.31,4.8-18.48,7.51-35.06,17.37-21.2,12.6-31.33,15.23-51.12,16.05-23.08.96-46.08-15.88-42.1-12.95Z"/>
@@ -89,93 +83,88 @@ export default function Header() {
         </Link>
       </div>
       
-      <div className='bg-beige-2 w-screen flex justify-between border-b border-accent-1' ref={searchRef}>
-        <div className='relative w-full max-w-lg my-6'>
-          <div className="absolute inset-y-0 left-0 pl-8 flex items-center text-accent-1 pointer-events-none z-10">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16">
+      <div className="header-search-area" ref={searchRef}>
+        <div className="search-wrapper">
+          <div className="search-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
             </svg>
           </div>
           <input 
             type="text" 
-            placeholder='Поиск книг и сессий...' 
-            id="mainSearch"
+            placeholder="Поиск книг и сессий..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className='absolute inset-y-0 w-full pl-10 pr-3 m-5 rounded-3xl bg-beige-1 focus:outline-none focus:ring-2 focus:ring-accent-1'
+            className="search-input-field"
           />
           
           {showResults && (
-  <div className="absolute top-full left-0 right-0 mt-2 bg-beige-1 rounded-xl shadow-lg border border-accent-1 z-50 max-h-96 overflow-y-auto">
-    {(searchResults.books?.length === 0 && searchResults.sessions?.length === 0) ? (
-      <div className="p-4 text-center text-gray-500">
-        <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <p>Ничего не найдено</p>
-        <p className="text-xs mt-1">Попробуйте изменить поисковый запрос</p>
-      </div>
-    ) : (
-      <>
-        {searchResults.sessions?.length > 0 && (
-          <div className="p-2">
-            <div className="px-3 py-2 text-sm font-semibold text-accent-1 border-b border-accent-1/30">
-              Сессии ({searchResults.sessions.length})
+            <div className="search-results-dropdown">
+              {(searchResults.books?.length === 0 && searchResults.sessions?.length === 0) ? (
+                <div className="empty-search-results">
+                  <svg className="empty-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <p>Ничего не найдено</p>
+                  <p className="empty-search-hint">Попробуйте изменить поисковый запрос</p>
+                </div>
+              ) : (
+                <>
+                  {searchResults.sessions?.length > 0 && (
+                    <div className="results-section">
+                      <div className="results-section-title">
+                        Сессии ({searchResults.sessions.length})
+                      </div>
+                      {searchResults.sessions.map((session) => (
+                        <div
+                          key={`session-${session.id}`}
+                          className="result-item"
+                          onClick={() => handleResultClick(session, 'session')}
+                        >
+                          <div className="result-item-title">{session.name}</div>
+                          <div className="result-item-subtitle">Сессия</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {searchResults.books?.length > 0 && (
+                    <div className="results-section">
+                      <div className="results-section-title">
+                        Книги ({searchResults.books.length})
+                      </div>
+                      {searchResults.books.map((book) => (
+                        <div
+                          key={`book-${book.id}`}
+                          className="result-item"
+                          onClick={() => handleResultClick(book, 'book')}
+                        >
+                          <div className="result-item-title">{book.title}</div>
+                          <div className="result-item-subtitle">{book.author}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            {searchResults.sessions.map((session) => (
-              <div
-                key={`session-${session.id}`}
-                className="px-3 py-2 hover:bg-accent-1/10 cursor-pointer rounded-lg transition-colors"
-                onClick={() => handleResultClick(session, 'session')}
-              >
-                <div className="font-medium">{session.name}</div>
-                <div className="text-xs text-gray-500">Сессия</div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {searchResults.books?.length > 0 && (
-          <div className="p-2">
-            <div className="px-3 py-2 text-sm font-semibold text-accent-1 border-b border-accent-1/30">
-              Книги ({searchResults.books.length})
-            </div>
-            {searchResults.books.map((book) => (
-              <div
-                key={`book-${book.id}`}
-                className="px-3 py-2 hover:bg-accent-1/10 cursor-pointer rounded-lg transition-colors"
-                onClick={() => handleResultClick(book, 'book')}
-              >
-                <div className="font-medium">{book.title}</div>
-                <div className="text-xs text-gray-500">{book.author}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </>
-    )}
-  </div>
-)}
-              
-             
+          )}
           
           {loading && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-beige-1 rounded-xl shadow-lg border border-accent-1 z-50 p-4 text-center">
-              <div className="text-sm text-gray-500">Поиск...</div>
+            <div className="search-loading-state">
+              <div className="search-loading-text">Поиск...</div>
             </div>
           )}
         </div>
-
-        <div className='flex p-10 m-4 gap-10 text-gray'>
-          <Link to="/profile">
-            <button className='hover:cursor-pointer'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-circle-fill" viewBox="0 0 16 16">
-                <circle cx="8" cy="8" r="8"/>
-              </svg>
-            </button>
-          </Link>
-        </div>
       </div>
-    </div>
+
+      <div className="header-actions-area">
+        <Link to="/profile" className="header-action-button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="8"/>
+          </svg>
+        </Link>
+      </div>
+    </header>
   );
 }

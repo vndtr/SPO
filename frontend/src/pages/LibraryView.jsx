@@ -4,6 +4,7 @@ import NavAside from '../components/mainComps/NavAside.jsx';
 import LibraryBook from '../components/libraryComps/LibraryBook.jsx';
 import UploadBookModal from '../components/libraryComps/UploadBookModal.jsx';
 import { getBooks, uploadBook, deleteBook, getCurrentUser, getBookProgress } from '../services/api';
+import '../styles/pages/library.css';
 
 export default function LibraryView() {
   const [books, setBooks] = useState([]);
@@ -11,10 +12,30 @@ export default function LibraryView() {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [sortOrder, setSortOrder] = useState('asc'); 
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     loadCurrentUser();
+    
+    const handleProgressUpdate = (event) => {
+      const { bookId, page } = event.detail;
+      setBooks(prevBooks => prevBooks.map(book => {
+        if (book.id === bookId) {
+          const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
+          if (totalPages && parseInt(totalPages) > 0) {
+            const progress = Math.round((page / parseInt(totalPages)) * 100);
+            return { ...book, progress: Math.min(progress, 100) };
+          }
+        }
+        return book;
+      }));
+    };
+    
+    window.addEventListener('progressUpdated', handleProgressUpdate);
+    
+    return () => {
+      window.removeEventListener('progressUpdated', handleProgressUpdate);
+    };
   }, []);
 
   const loadCurrentUser = async () => {
@@ -35,7 +56,8 @@ export default function LibraryView() {
       setAuthLoading(false);
     }
   };
-const sortBooks = (booksList, order) => {
+
+  const sortBooks = (booksList, order) => {
     return [...booksList].sort((a, b) => {
       if (order === 'asc') {
         return a.title.localeCompare(b.title, 'ru');
@@ -50,61 +72,31 @@ const sortBooks = (booksList, order) => {
     setBooks(sortBooks(books, order));
   };
 
-    const loadBooks = async () => {
+  const loadBooks = async () => {
     try {
-        setLoading(true);
-        const data = await getBooks();
-
-        
-        
-        const adaptedBooks = await Promise.all(data.map(async (book) => {
-            const progress = await getBookProgress(book.id);
-            return {
-                id: book.id,
-                title: book.title,
-                author: book.author,
-                progress: progress,
-                coverImage: book.cover_img || '',
-                coverColor: 'bg-blue-300'
-            };
-        }));
-        
-        const sortedBooks = sortBooks(adaptedBooks, sortOrder);
-        setBooks(sortedBooks);
+      setLoading(true);
+      const data = await getBooks();
+      
+      const adaptedBooks = await Promise.all(data.map(async (book) => {
+        const progress = await getBookProgress(book.id);
+        return {
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          progress: progress,
+          coverImage: book.cover_img || '',
+          coverGradient: book.cover_gradient || null
+        };
+      }));
+      
+      const sortedBooks = sortBooks(adaptedBooks, sortOrder);
+      setBooks(sortedBooks);
     } catch (error) {
-        console.error('Error loading books:', error);
+      console.error('Error loading books:', error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
-
-// frontend/src/pages/LibraryView.jsx
-
-useEffect(() => {
-  loadCurrentUser();
-  
-  // Слушаем обновления прогресса
-  const handleProgressUpdate = (event) => {
-    const { bookId, page } = event.detail;
-    // Обновляем прогресс книги в списке
-    setBooks(prevBooks => prevBooks.map(book => {
-      if (book.id === bookId) {
-        const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
-        if (totalPages && parseInt(totalPages) > 0) {
-          const progress = Math.round((page / parseInt(totalPages)) * 100);
-          return { ...book, progress: Math.min(progress, 100) };
-        }
-      }
-      return book;
-    }));
   };
-  
-  window.addEventListener('progressUpdated', handleProgressUpdate);
-  
-  return () => {
-    window.removeEventListener('progressUpdated', handleProgressUpdate);
-  };
-}, []);
 
   const handleUploadBook = async (file, title, author) => {
     if (!currentUser || !currentUser.user_id) {
@@ -147,10 +139,10 @@ useEffect(() => {
     return (
       <>
         <Header />
-        <div className='flex'>
+        <div className="library-layout">
           <NavAside />
-          <div className='bg-beige-1 flex flex-col text-accent-2 w-screen p-10'>
-            <div className="text-center py-20">Загрузка пользователя...</div>
+          <div className="library-container">
+            <div className="library-loading">Загрузка пользователя...</div>
           </div>
         </div>
       </>
@@ -161,14 +153,15 @@ useEffect(() => {
     return (
       <>
         <Header />
-        <div className='flex'>
+        <div className="library-layout">
           <NavAside />
-          <div className='bg-beige-1 flex flex-col text-accent-2 w-screen p-10'>
-            <div className="text-center py-20 text-red-500">
-              <p className="text-xl mb-4">Ошибка авторизации</p>
+          <div className="library-container">
+            <div className="library-empty">
+              <p className="empty-title">Ошибка авторизации</p>
               <button 
                 onClick={() => window.location.href = '/login'}
-                className="px-4 py-2 bg-accent-1 text-beige-1 rounded"
+                className="upload-button"
+                style={{ display: 'inline-block', width: 'auto' }}
               >
                 Войти снова
               </button>
@@ -182,36 +175,27 @@ useEffect(() => {
   return (
     <>
       <Header />
-      <div className='flex'>
+      <div className="library-layout">
         <NavAside />
-        <div className='bg-beige-1 flex flex-col text-accent-2 w-screen p-10'>
-          <div className='flex justify-between items-center'>
-            <div>
-              <h2 className='text-blue text-3xl mb-4'>Моя библиотека</h2>
-              <h3>Ваши книги для личного и совместного просмотра</h3>
+        <div className="library-container">
+          <div className="library-header">
+            <div className="library-title-section">
+              <h2 className="library-title">Моя библиотека</h2>
+              <p className="library-subtitle">Ваши книги для личного и совместного просмотра</p>
             </div>
             
-            <div className="flex gap-4">
-              {/* Сортировка */}
-              <div className="flex gap-2 items-center">
-                <span className="text-sm text-gray-600">Сортировать:</span>
+            <div className="library-actions">
+              <div className="sort-buttons">
+                <span className="sort-label">Сортировать:</span>
                 <button
                   onClick={() => handleSortChange('asc')}
-                  className={`px-3 py-2 rounded-xl transition-colors ${
-                    sortOrder === 'asc' 
-                      ? 'bg-accent-1 text-beige-1' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`sort-button ${sortOrder === 'asc' ? 'sort-button-active' : ''}`}
                 >
                   А → Я
                 </button>
                 <button
                   onClick={() => handleSortChange('desc')}
-                  className={`px-3 py-2 rounded-xl transition-colors ${
-                    sortOrder === 'desc' 
-                      ? 'bg-accent-1 text-beige-1' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`sort-button ${sortOrder === 'desc' ? 'sort-button-active' : ''}`}
                 >
                   Я → А
                 </button>
@@ -219,27 +203,27 @@ useEffect(() => {
               
               <button
                 onClick={() => setShowUploadModal(true)}
-                className='relative bg-accent-1 text-beige-1 rounded-xl h-fit py-4 px-8 pl-10 cursor-pointer'
+                className="upload-button"
                 disabled={loading}
               >
-                Загрузить книгу
-                <svg className='absolute ml-2 left-3 top-1/2 -translate-y-1/2 w-5 h-5' 
-                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                <svg className="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                 </svg>
+                Загрузить книгу
               </button>
             </div>
- </div>
-          {loading && <div className="text-center py-10">Загрузка...</div>}
+          </div>
+
+          {loading && <div className="library-loading">Загрузка...</div>}
 
           {!loading && books.length === 0 && (
-            <div className="text-center py-20 text-gray-500">
-              <p className="text-xl mb-4">В библиотеке пока нет книг</p>
-              <p>Нажмите "Загрузить книгу", чтобы добавить первую книгу</p>
+            <div className="library-empty">
+              <p className="empty-title">В библиотеке пока нет книг</p>
+              <p className="empty-text">Нажмите "Загрузить книгу", чтобы добавить первую книгу</p>
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-10 mt-8">
+          <div className="books-grid">
             {books.map((book) => (
               <LibraryBook 
                 key={book.id}

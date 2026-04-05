@@ -1,6 +1,7 @@
 // frontend/src/App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import './styles/main.css'; // Добавляем импорт глобальных стилей
 import MainView from './pages/MainView';
 import LibraryView from './pages/LibraryView';
 import ReaderView from './pages/ReaderView';
@@ -30,58 +31,56 @@ function App() {
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
   }, []);
 
-  // В App.jsx, в функции applyGlobalStyles:
-const applyGlobalStyles = (settings) => {
+  const applyGlobalStyles = (settings) => {
     const bgColors = {
-        light: '#ffffff',
-        dark: '#2a2a2a',
-        beige: '#f5f0e8'
+      light: '#ffffff',
+      dark: '#2a2a2a',
+      beige: '#f5f0e8'
     };
     const textColors = {
-        light: '#374151',
-        dark: '#e0e0e0',
-        beige: '#4a4a4a'
+      light: '#374151',
+      dark: '#e0e0e0',
+      beige: '#4a4a4a'
     };
     
     document.body.style.backgroundColor = bgColors[settings.background_color] || '#ffffff';
     document.body.style.color = textColors[settings.background_color] || '#374151';
-};
+  };
 
-  // В App.jsx, в checkAuth после получения пользователя:
-const checkAuth = async () => {
+  const checkAuth = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
-        setIsAuthenticated(false);
-        setLoading(false);
-        return;
+      setIsAuthenticated(false);
+      setLoading(false);
+      return;
     }
     
     try {
-        const user = await getCurrentUser();
-        if (user && user.user_id) {
-            setIsAuthenticated(true);
-            
-            // Загружаем настройки из localStorage или с бэкенда
-            const savedSettings = localStorage.getItem('reader_settings');
-            if (savedSettings) {
-                setGlobalSettings(JSON.parse(savedSettings));
-                applyGlobalStyles(JSON.parse(savedSettings));
-            } else {
-                const settings = await getUserSettings();
-                setGlobalSettings(settings);
-                applyGlobalStyles(settings);
-            }
+      const user = await getCurrentUser();
+      if (user && user.user_id) {
+        setIsAuthenticated(true);
+        
+        // Загружаем настройки из localStorage или с бэкенда
+        const savedSettings = localStorage.getItem('reader_settings');
+        if (savedSettings) {
+          setGlobalSettings(JSON.parse(savedSettings));
+          applyGlobalStyles(JSON.parse(savedSettings));
         } else {
-            setIsAuthenticated(false);
+          const settings = await getUserSettings();
+          setGlobalSettings(settings);
+          applyGlobalStyles(settings);
         }
-    } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('access_token');
+      } else {
         setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('access_token');
+      setIsAuthenticated(false);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -93,7 +92,11 @@ const checkAuth = async () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Загрузка...</div>;
+    return (
+      <div className="reader-loading">
+        <div className="reader-loading-text">Загрузка...</div>
+      </div>
+    );
   }
 
   return (

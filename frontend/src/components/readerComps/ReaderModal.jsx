@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
+import '../../styles/components/modal.css';
+import '../../styles/components/reader.css';
 
 export default function ReaderModal({ 
     onClose,
@@ -23,13 +25,21 @@ export default function ReaderModal({
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50" onClick={onClose}>
-            <div className="bg-beige-1 p-6 rounded-2xl max-w-lg w-full text-blue flex flex-col gap-4 border border-accent-1" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-medium">{isEdit ? 'Редактирование заметки' : 'Новая заметка'}</h3>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-backdrop"></div>
+            <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h3 className="modal-title">{isEdit ? 'Редактирование заметки' : 'Новая заметка'}</h3>
+                    <button onClick={onClose} className="modal-close">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
                 
-                <div className="bg-beige-2 p-4 rounded-xl border border-accent-1/30">
-                    <p className="text-sm text-gray-600 mb-1">Выделенный текст:</p>
-                    <p className="text-blue italic bg-white p-2 rounded">"{selectedText}"</p>
+                <div className="reader-modal-selected-text">
+                    <p className="reader-modal-selected-label">Выделенный текст:</p>
+                    <p className="reader-modal-selected-content">"{selectedText}"</p>
                 </div>
                 
                 <textarea
@@ -37,38 +47,37 @@ export default function ReaderModal({
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     rows={4}
-                    className="border border-accent-1/30 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-accent-1 w-full"
+                    style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid rgba(212, 163, 115, 0.3)',
+                        borderRadius: '0.75rem',
+                        fontSize: '0.875rem',
+                        backgroundColor: '#ffffff',
+                        color: '#1e293b',
+                        resize: 'vertical'
+                    }}
                     autoFocus
-                />
+                    />
 
-                <div className="flex flex-col gap-2">
-                    <span className="text-sm font-medium">Цвет подчеркивания:</span>
-                    <div className="flex gap-3">
+                <div className="reader-modal-color-section">
+                    <span className="reader-modal-color-label">Цвет подчеркивания:</span>
+                    <div className="reader-modal-colors">
                         {['yellow', 'green', 'blue', 'pink'].map(c => (
                             <button 
                                 key={c}
-                                className={`w-10 h-10 rounded-full bg-${c}-300 border-2 transition-all ${
-                                    color === c 
-                                        ? 'border-accent-1 scale-110 ring-2 ring-accent-1/50' 
-                                        : 'border-transparent hover:scale-105'
-                                }`}
+                                className={`reader-modal-color-btn reader-modal-color-btn-${c} ${color === c ? 'reader-modal-color-btn-active' : ''}`}
                                 onClick={() => setColor(c)}
                             />
                         ))}
                     </div>
                 </div>
 
-                <div className="flex gap-4 justify-end mt-4">
-                    <button 
-                        onClick={handleSave} 
-                        className="bg-accent-1 text-beige-1 rounded-xl px-6 py-2 hover:opacity-90 transition font-medium"
-                    >
+                <div className="form-actions">
+                    <button onClick={handleSave} className="form-button-submit">
                         {isEdit ? 'Сохранить изменения' : 'Сохранить заметку'}
                     </button>
-                    <button 
-                        onClick={onClose} 
-                        className="border border-accent-1 text-accent-1 rounded-xl px-6 py-2 hover:bg-accent-1/10 transition font-medium"
-                    >
+                    <button onClick={onClose} className="form-button-cancel">
                         Отмена
                     </button>
                 </div>

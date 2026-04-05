@@ -1,0 +1,106 @@
+/* src/styles/main.css */
+
+@import "tailwindcss";
+@config "../../tailwind.config.cjs";
+
+/* Импорт стилей страниц */
+@import './pages/main.css';
+@import './pages/profile.css';
+@import './pages/library.css';
+@import './pages/sessions.css';
+@import './pages/reader.css';
+@import './pages/login.css';
+
+/* Импорт стилей компонентов */
+@import './components/header.css';
+@import './components/sidebar.css';
+@import './components/buttons.css';
+@import './components/cards.css';
+@import './components/annotations.css';
+@import './components/library.css';
+@import './components/sessions.css';
+@import './components/modal.css';
+@import './components/reader.css';
+
+/* Глобальные стили */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+}
+
+/* Убираем синий фон при клике */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Кастомный скроллбар */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #ffb347, #ff8c1a);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #ff8c1a, #ff6b00);
+}
+
+/* Выделение текста */
+::selection {
+  background: #ffb347;
+  color: #0f1722;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Лейаут для страниц с сайдбаром */
+.profile-layout,
+.library-layout,
+.sessions-layout,
+.reader-layout {
+  display: flex;
+}

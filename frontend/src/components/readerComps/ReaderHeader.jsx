@@ -1,5 +1,7 @@
+// frontend/src/components/readerComps/ReaderHeader.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import '../../styles/components/reader.css';
 
 export default function ReaderHeader({ 
   isSession = false, 
@@ -17,13 +19,12 @@ export default function ReaderHeader({
   const [modalOpen, setModalOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // Вычисляем цвет фона на основе глобальных настроек
-const bgColors = {
+  const bgColors = {
     light: '#ffffff',
     dark: '#2a2a2a',
     beige: '#f5f0e8'
-};
-const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
+  };
+  const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
 
   const handleParticipantsClick = () => {
     setModalOpen(false);
@@ -39,7 +40,6 @@ const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
     }
   };
 
-  // Закрытие меню при клике вне его области
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -70,17 +70,17 @@ const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
   }, [modalOpen]);
 
   return (
-    <div className='flex flex-col text-accent-2'>
-      {/* Шапка */}
-      <div className='flex'>
+    <div className="reader-header">
+      <div className="reader-header-top">
+        {/* Логотип - скрывается когда панель закрыта */}
         <div 
-          className='max-w-[30vw] min-w-[15vw] flex justify-center items-center transition-colors duration-300'
+          className={`reader-header-logo-area ${!isSidebarOpen ? 'reader-header-logo-hidden' : ''}`}
           style={{ 
             backgroundColor: isSidebarOpen ? '#3b3b3b' : currentBgColor,
           }}
         >
-          <Link to='/'>
-            <svg className="w-32 h-32 text-beige-1" viewBox="0 0 881.3 192.21" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+          <Link to="/" className="reader-header-logo-link">
+            <svg className="reader-header-logo" viewBox="0 0 881.3 192.21" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
               <g>
                 <path d="M.45,113.21c3.55,2.61,50.38,3.65,71.89-6.55,21.75-10.32,32.74-22.84,52.74-27.27,33.59-7.43,65.4,13.4,62,12.53-7.53-1.94-27.07-9.66-58.34.83-14.31,4.8-18.48,7.51-35.06,17.37-21.2,12.6-31.33,15.23-51.12,16.05-23.08.96-46.08-15.88-42.1-12.95Z"/>
                 <path d="M94.12,126.97c3.55,2.61,50.38,3.65,71.89-6.55,21.75-10.32,32.74-22.84,52.74-27.27,33.59-7.43,65.4,13.4,62,12.53-7.53-1.94-27.07-9.66-58.34.83-14.31,4.8-18.48,7.51-35.06,17.37-21.2,12.6-31.33,15.23-51.12,16.05-23.08.96-46.08-15.88-42.1-12.95Z"/>
@@ -97,22 +97,26 @@ const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
         </div>
 
         <div 
-          className='w-screen flex justify-between border-b border-accent-1'
+          className="reader-header-content"
           style={{ backgroundColor: currentBgColor }}
         >
-          <div className='w-full max-w-lg my-6 flex items-center ml-10 text-3xl'>
-            <h2 style={{ color: '#374151' }}>
+          <div className="reader-header-title">
+            <h2 className="reader-header-title-text">
               {bookTitle}
-              {bookAuthor && <span className="text-sm ml-2 text-gray-500">({bookAuthor})</span>}
+              {bookAuthor && <span className="reader-header-author">({bookAuthor})</span>}
             </h2>         
           </div>
 
           <div 
-            className='flex p-4 m-10 mr-0 gap-4 border-l border-t border-b rounded-2xl rounded-tr-none rounded-br-none'
-            style={{ backgroundColor: currentBgColor, borderColor: '#ef4444', borderWidth: '1px' }}
+            className="reader-header-actions"
+            style={{ backgroundColor: currentBgColor, borderColor: '#ef4444' }}
           >
             {onToggleSidebar && (
-              <button onClick={onToggleSidebar} className='hover:cursor-pointer' style={{ color: '#374151' }} title={isSidebarOpen ? "Скрыть боковую панель" : "Показать боковую панель"}>
+              <button 
+                onClick={onToggleSidebar} 
+                className="reader-header-button" 
+                title={isSidebarOpen ? "Скрыть боковую панель" : "Показать боковую панель"}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                   {isSidebarOpen ? (
                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
@@ -123,45 +127,48 @@ const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
               </button>
             )}
             
-            <div className="relative" ref={menuRef}>
-              <button className='hover:cursor-pointer' style={{ color: '#374151' }} onClick={() => setModalOpen(!modalOpen)}>
+            <div className="reader-header-menu-container" ref={menuRef}>
+              <button 
+                className="reader-header-button" 
+                onClick={() => setModalOpen(!modalOpen)}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
                 </svg>
               </button>
               
               {modalOpen && (
-                <div className="absolute right-0 top-12 z-50">
-                  <div className="bg-beige-2 p-6 rounded-2xl border border-accent-1 w-64 text-blue shadow-xl">
-                    <ul className='flex flex-col gap-2'>
+                <div className="reader-header-menu">
+                  <div className="reader-header-menu-content">
+                    <ul className="reader-header-menu-list">
                       {isSession && (
                         <li 
-                          className="cursor-pointer hover:text-accent-1 px-2 py-2 hover:bg-beige-1 rounded text-lg"
+                          className="reader-header-menu-item"
                           onClick={handleParticipantsClick}
                         >
                           Участники
                         </li>
                       )}
                       <li 
-                        className="cursor-pointer hover:text-accent-1 px-2 py-2 hover:bg-beige-1 rounded text-lg"
+                        className="reader-header-menu-item"
                         onClick={handleSettingsClick}
                       >
                         Настройки
                       </li>
                       <Link 
-    to="#" 
-    onClick={(e) => {
-        e.preventDefault();
-        setModalOpen(false);
-        if (isSession && onLeaveSession) {
-            onLeaveSession();
-        }
-    }}
->
-    <li className="cursor-pointer hover:text-accent-1 px-2 py-2 hover:bg-beige-1 rounded text-lg">
-        Выйти из сессии
-    </li>
-</Link>
+                        to="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setModalOpen(false);
+                          if (isSession && onLeaveSession) {
+                            onLeaveSession();
+                          }
+                        }}
+                      >
+                        <li className="reader-header-menu-item">
+                          Выйти из сессии
+                        </li>
+                      </Link>
                     </ul>
                   </div>
                 </div>
@@ -172,7 +179,7 @@ const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
       </div>
       
       <div 
-        className="h-px bg-red-500 w-full"
+        className="reader-header-red-line"
         style={{ 
           marginLeft: isSidebarOpen ? '15vw' : '0',
           width: isSidebarOpen ? 'calc(100% - 15vw)' : '100%'

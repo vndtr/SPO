@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import SessionReaderNote from './SessionReaderNote.jsx';
 import SessionReaderModal from './SessionReaderModal.jsx';
 import { getSessionAnnotations } from '../../services/api';
+import '../../styles/components/reader.css';
 
 export default function SessionReaderAside({ 
   showNoteModal, 
@@ -26,7 +27,6 @@ export default function SessionReaderAside({
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Загрузка аннотаций
   const loadAnnotations = async () => {
     if (!sessionId) return;
     
@@ -34,7 +34,6 @@ export default function SessionReaderAside({
       setLoading(true);
       const data = await getSessionAnnotations(sessionId);
       
-      // Обрабатываем заметки - добавляем author
       const notes = (data.notes || []).map(n => ({ 
         ...n, 
         type: 'note',
@@ -46,7 +45,6 @@ export default function SessionReaderAside({
         }
       }));
       
-      // Цитаты - без автора
       const quotes = (data.quotes || []).map(q => ({ 
         ...q, 
         type: 'quote',
@@ -59,36 +57,27 @@ export default function SessionReaderAside({
       setAnnotations(allAnnotations);
 
       setTimeout(() => {
-            if (window.refreshAllHighlights) {
-                
-                window.refreshAllHighlights();
-            }
-        }, 200);
-
-      
-
-      // Собираем пользователей для фильтрации
-const uniqueUsers = new Map();
-
-notes.forEach(note => {
-    if (note.author && !uniqueUsers.has(note.author.id)) {
-        const isTeacher = note.author.role === 'teacher';
-        const isCurrentUser = note.author.id === currentUser?.user_id;
-        
-        // Для ученика: добавляем только учителей и себя
-        if (userRole === 'student') {
-            if (isTeacher || isCurrentUser) {
-                uniqueUsers.set(note.author.id, note.author);
-            }
-        } 
-        // Для учителя: добавляем всех пользователей
-        else if (userRole === 'teacher') {
-            uniqueUsers.set(note.author.id, note.author);
+        if (window.refreshAllHighlights) {
+          window.refreshAllHighlights();
         }
-    }
-});
+      }, 200);
 
-setUsers(Array.from(uniqueUsers.values()));
+      const uniqueUsers = new Map();
+      notes.forEach(note => {
+        if (note.author && !uniqueUsers.has(note.author.id)) {
+          const isTeacher = note.author.role === 'teacher';
+          const isCurrentUser = note.author.id === currentUser?.user_id;
+          
+          if (userRole === 'student') {
+            if (isTeacher || isCurrentUser) {
+              uniqueUsers.set(note.author.id, note.author);
+            }
+          } else if (userRole === 'teacher') {
+            uniqueUsers.set(note.author.id, note.author);
+          }
+        }
+      });
+      setUsers(Array.from(uniqueUsers.values()));
       
     } catch (err) {
       console.error('Error loading annotations:', err);
@@ -101,7 +90,6 @@ setUsers(Array.from(uniqueUsers.values()));
     loadAnnotations();
   }, [sessionId]);
 
-  // Обновление при событиях
   useEffect(() => {
     const handleUpdate = () => {
       loadAnnotations();
@@ -135,92 +123,80 @@ setUsers(Array.from(uniqueUsers.values()));
     setReplyText('');
   };
 
-  // Добавьте этот useEffect в SessionReaderAside.jsx, рядом с существующим
-
-useEffect(() => {
+  useEffect(() => {
     const handleForceReload = () => {
-        loadAnnotations();
+      loadAnnotations();
     };
     
     window.addEventListener('forceReloadAnnotations', handleForceReload);
     return () => window.removeEventListener('forceReloadAnnotations', handleForceReload);
-}, [sessionId]);
+  }, [sessionId]);
 
-useEffect(() => {
+  useEffect(() => {
     window.openNoteReplies = (noteId) => {
-        // Находим компонент заметки и открываем ответы
-        const noteComponent = document.getElementById(`note-${noteId}`);
-        if (noteComponent) {
-            const showRepliesButton = noteComponent.querySelector('.show-replies-button');
-            if (showRepliesButton) {
-                showRepliesButton.click();
-            }
+      const noteComponent = document.getElementById(`note-${noteId}`);
+      if (noteComponent) {
+        const showRepliesButton = noteComponent.querySelector('.show-replies-button');
+        if (showRepliesButton) {
+          showRepliesButton.click();
         }
+      }
     };
     
     return () => {
-        delete window.openNoteReplies;
+      delete window.openNoteReplies;
     };
-}, []);
+  }, []);
 
-const filteredAnnotations = annotations.filter(ann => {
-    // 1. Сначала фильтр по типу
+  const filteredAnnotations = annotations.filter(ann => {
     if (filterType !== 'all' && ann.type !== filterType) {
-        return false;
+      return false;
     }
     
-    // 2. Если фильтруем по конкретному пользователю
     if (filterUser !== 'all') {
-        const selectedUserId = parseInt(filterUser);
-        
-        // Для цитат: показываем только если фильтр по текущему пользователю
-        if (ann.type === 'quote') {
-            const isCurrentUser = selectedUserId === currentUser?.user_id;
-            return isCurrentUser;
-        }
-        
-        // Для заметок: проверяем соответствие автору
-        const match = ann.author?.id === selectedUserId;
-        if (!match) return false;
+      const selectedUserId = parseInt(filterUser);
+      
+      if (ann.type === 'quote') {
+        const isCurrentUser = selectedUserId === currentUser?.user_id;
+        return isCurrentUser;
+      }
+      
+      const match = ann.author?.id === selectedUserId;
+      if (!match) return false;
     }
     
-    // 3. Если filterUser === 'all' (показываем всё)
     if (filterUser === 'all') {
-        // Цитаты показываем всегда
-        if (ann.type === 'quote') {
-            return true;
-        }
-        
-        // Для заметок проверяем видимость в зависимости от роли
-        if (userRole === 'student') {
-            const isOwn = ann.author?.id === currentUser?.user_id;
-            const isTeacher = ann.author?.role === 'teacher';
-            if (!isOwn && !isTeacher) return false;
-        }
+      if (ann.type === 'quote') {
+        return true;
+      }
+      
+      if (userRole === 'student') {
+        const isOwn = ann.author?.id === currentUser?.user_id;
+        const isTeacher = ann.author?.role === 'teacher';
+        if (!isOwn && !isTeacher) return false;
+      }
     }
     
     return true;
-});
-
+  });
 
   if (loading) {
     return (
-      <div className="max-w-[15vw] min-w-[15vw] flex flex-col bg-gray text-beige-1 h-full items-center justify-center">
-        <p>Загрузка...</p>
+      <div className="reader-aside">
+        <div className="reader-aside-loading">Загрузка...</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[15vw] min-w-[15vw] flex flex-col bg-gray text-beige-1 h-full">
-      <h2 className='px-2 ml-2 mt-4 text-lg'>Аннотации</h2>
+    <div className="reader-aside">
+      <h2 className="reader-aside-title">Аннотации</h2>
       
-      {/* Фильтры */}
-      <div className="px-2 mt-2 space-y-2">
+      <div className="reader-aside-filter">
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="w-full px-2 py-1 rounded-xl bg-accent-2 text-beige-1 cursor-pointer"
+          className="reader-aside-select"
         >
           <option value="all">Все типы</option>
           <option value="note">Только заметки</option>
@@ -228,32 +204,31 @@ const filteredAnnotations = annotations.filter(ann => {
         </select>
 
         {users.length > 0 && (
-    <select
-        value={filterUser}
-        onChange={(e) => setFilterUser(e.target.value)}
-        className="w-full px-2 py-1 rounded-xl bg-accent-2 text-beige-1 cursor-pointer"
-    >
-        <option value="all">Все пользователи</option>
-        {users.map(user => (
-            <option key={user.id} value={user.id}>
+          <select
+            value={filterUser}
+            onChange={(e) => setFilterUser(e.target.value)}
+            className="reader-aside-select"
+            style={{ marginTop: '0.5rem' }}
+          >
+            <option value="all">Все пользователи</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
                 {user.name} {user.id === currentUser?.user_id ? '(Вы)' : ''} {user.role === 'teacher' ? '(Учитель)' : ''}
-            </option>
-        ))}
-    </select>
-)}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
-      {/* Список аннотаций */}
-      <div className="flex-1 overflow-y-auto flex flex-col gap-3 mt-4 pb-4 px-2">
+      <div className="reader-aside-annotations">
         {filteredAnnotations.length === 0 ? (
-          <p className="text-beige-1/70 text-sm text-center mt-10">
+          <p className="reader-aside-empty">
             Нет аннотаций<br/>
             Выделите текст, чтобы создать цитату или заметку
           </p>
         ) : (
           filteredAnnotations.map((ann, index) => {
             if (ann.type === 'quote') {
-              // Цитата — без автора, без ответа, без редактирования
               return (
                 <SessionReaderNote 
                   key={`${ann.id}_quote_${index}`}
@@ -269,45 +244,43 @@ const filteredAnnotations = annotations.filter(ann => {
                 />
               );
             } else {
-              // Заметка — с автором, с ответами, с редактированием
               const isReplyOpen = replyToNote?.id === ann.id;
               return (
                 <SessionReaderNote 
-    key={`${ann.id}_${index}`}
-    id={ann.id}
-    elementId={`note-${ann.id}`}
-    shouldOpenReplies={highlightedNoteId === ann.id}
-    type={ann.type}
-    text={ann.selected_text}
-    comment={ann.comment}
-    color={ann.color}
-    author={{ 
-        id: ann.author_id, 
-        name: ann.author_name, 
-        role: ann.author_role 
-    }}
-    visibility={ann.is_private ? 'private' : 'public'}
-    start_index={ann.start_index}
-    end_index={ann.end_index}
-    currentUser={currentUser}
-    onDelete={onDeleteAnnotation}
-    onEdit={onEditAnnotation}
-    onReplyClick={() => handleReplyClick(ann)}
-    replyToNote={replyToNote}
-    replyText={replyText}
-    onReplyTextChange={setReplyText}
-    onSubmitReply={handleSubmitReply}
-    onCancelReply={handleCancelReply}
-    onNoteClick={() => onAnnotationClick(ann.id, ann.start_index)}
-    isReplyOpen={replyToNote?.id === ann.id}
-/>
+                  key={`${ann.id}_${index}`}
+                  id={ann.id}
+                  elementId={`note-${ann.id}`}
+                  shouldOpenReplies={highlightedNoteId === ann.id}
+                  type={ann.type}
+                  text={ann.selected_text}
+                  comment={ann.comment}
+                  color={ann.color}
+                  author={{ 
+                    id: ann.author_id, 
+                    name: ann.author_name, 
+                    role: ann.author_role 
+                  }}
+                  visibility={ann.is_private ? 'private' : 'public'}
+                  start_index={ann.start_index}
+                  end_index={ann.end_index}
+                  currentUser={currentUser}
+                  onDelete={onDeleteAnnotation}
+                  onEdit={onEditAnnotation}
+                  onReplyClick={() => handleReplyClick(ann)}
+                  replyToNote={replyToNote}
+                  replyText={replyText}
+                  onReplyTextChange={setReplyText}
+                  onSubmitReply={handleSubmitReply}
+                  onCancelReply={handleCancelReply}
+                  onNoteClick={() => onAnnotationClick(ann.id, ann.start_index)}
+                  isReplyOpen={replyToNote?.id === ann.id}
+                />
               );
             }
           })
         )}
       </div>
 
-      {/* Модалка для создания заметки */}
       {showNoteModal && (
         <SessionReaderModal
           onClose={onCloseNoteModal}

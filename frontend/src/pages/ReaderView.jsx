@@ -20,6 +20,7 @@ import {
   getUserSettings,
   updateUserSettings
 } from '../services/api';
+import '../styles/pages/reader.css';
 
 export default function ReaderView() {
   const [searchParams] = useSearchParams();
@@ -40,7 +41,7 @@ export default function ReaderView() {
   const [currentUser, setCurrentUser] = useState(null);
   const menuRef = useRef(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-const [editingAnnotation, setEditingAnnotation] = useState(null);
+  const [editingAnnotation, setEditingAnnotation] = useState(null);
 
   useEffect(() => {
     loadCurrentUser();
@@ -48,15 +49,15 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
 
   const loadCurrentUser = async () => {
     try {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
-        if (user) {
-            await loadSettings(); // Загружаем настройки из БД после получения пользователя
-        }
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      if (user) {
+        await loadSettings();
+      }
     } catch (error) {
-        console.error('Error loading user:', error);
+      console.error('Error loading user:', error);
     }
-};
+  };
 
   const loadSettings = async () => {
     try {
@@ -93,14 +94,14 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
 
   useEffect(() => {
     const handleSettingsChange = (event) => {
-        if (event.detail) {
-            setReaderSettings(event.detail);
-        }
+      if (event.detail) {
+        setReaderSettings(event.detail);
+      }
     };
     
     window.addEventListener('settingsChanged', handleSettingsChange);
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
-}, []);
+  }, []);
 
   const handleSettingsChange = async (newSettings) => {
     try {
@@ -129,41 +130,40 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
   };
 
   const handleQuote = async (color) => {
-  if (!pendingSelection || !soloSession || !currentUser) return;
-  
-  try {
-    const quoteData = {
-      solo_session_id: soloSession.id,
-      selected_text: pendingSelection.text,
-      color: color,
-      start_index: pendingSelection.startIndex,
-      end_index: pendingSelection.endIndex
-    };
+    if (!pendingSelection || !soloSession || !currentUser) return;
     
-    const savedQuote = await createSoloQuote(quoteData);
-    
-    // Мгновенное применение подсветки для цитаты
-    if (window.applyHighlightToCurrentPage) {
-      window.applyHighlightToCurrentPage({
-        id: savedQuote.id,
-        type: 'quote',
+    try {
+      const quoteData = {
+        solo_session_id: soloSession.id,
+        selected_text: pendingSelection.text,
         color: color,
         start_index: pendingSelection.startIndex,
-        end_index: pendingSelection.endIndex,
-        selected_text: pendingSelection.text
-      });
+        end_index: pendingSelection.endIndex
+      };
+      
+      const savedQuote = await createSoloQuote(quoteData);
+      
+      if (window.applyHighlightToCurrentPage) {
+        window.applyHighlightToCurrentPage({
+          id: savedQuote.id,
+          type: 'quote',
+          color: color,
+          start_index: pendingSelection.startIndex,
+          end_index: pendingSelection.endIndex,
+          selected_text: pendingSelection.text
+        });
+      }
+      
+      setShowMenu(false);
+      setPendingSelection(null);
+      window.getSelection()?.removeAllRanges();
+      window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+      
+    } catch (error) {
+      console.error('Error creating quote:', error);
+      alert('Ошибка при создании цитаты');
     }
-    
-    setShowMenu(false);
-    setPendingSelection(null);
-    window.getSelection()?.removeAllRanges();
-    window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
-    
-  } catch (error) {
-    console.error('Error creating quote:', error);
-    alert('Ошибка при создании цитаты');
-  }
-};
+  };
 
   const handleNoteClick = () => {
     setShowMenu(false);
@@ -171,43 +171,42 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
   };
 
   const handleAddNote = async (color, comment) => {
-  if (!pendingSelection || !soloSession || !currentUser) return;
-  
-  try {
-    const noteData = {
-      solo_session_id: soloSession.id,
-      selected_text: pendingSelection.text,
-      comment: comment,
-      color: color,
-      start_index: pendingSelection.startIndex,
-      end_index: pendingSelection.endIndex
-    };
+    if (!pendingSelection || !soloSession || !currentUser) return;
     
-    const savedNote = await createSoloNote(noteData);
-    
-    // Мгновенное применение подсветки
-    if (window.applyHighlightToCurrentPage) {
-      window.applyHighlightToCurrentPage({
-        id: savedNote.id,
-        type: 'note',
+    try {
+      const noteData = {
+        solo_session_id: soloSession.id,
+        selected_text: pendingSelection.text,
+        comment: comment,
         color: color,
         start_index: pendingSelection.startIndex,
-        end_index: pendingSelection.endIndex,
-        comment: comment,
-        selected_text: pendingSelection.text
-      });
+        end_index: pendingSelection.endIndex
+      };
+      
+      const savedNote = await createSoloNote(noteData);
+      
+      if (window.applyHighlightToCurrentPage) {
+        window.applyHighlightToCurrentPage({
+          id: savedNote.id,
+          type: 'note',
+          color: color,
+          start_index: pendingSelection.startIndex,
+          end_index: pendingSelection.endIndex,
+          comment: comment,
+          selected_text: pendingSelection.text
+        });
+      }
+      
+      setShowNoteModal(false);
+      setPendingSelection(null);
+      window.getSelection()?.removeAllRanges();
+      window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+      
+    } catch (error) {
+      console.error('Error creating note:', error);
+      alert('Ошибка при создании заметки');
     }
-    
-    setShowNoteModal(false);
-    setPendingSelection(null);
-    window.getSelection()?.removeAllRanges();
-    window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
-    
-  } catch (error) {
-    console.error('Error creating note:', error);
-    alert('Ошибка при создании заметки');
-  }
-};
+  };
 
   const handleCloseNoteModal = () => {
     setShowNoteModal(false);
@@ -216,28 +215,27 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
   };
 
   const handleDeleteAnnotation = async (id, type) => {
-  if (!window.confirm('Вы уверены, что хотите удалить эту аннотацию?')) {
-    return;
-  }
-  
-  try {
-    if (type === 'note') {
-      await deleteSoloNote(id, soloSession.id);
-    } else {
-      await deleteSoloQuote(id, soloSession.id);
+    if (!window.confirm('Вы уверены, что хотите удалить эту аннотацию?')) {
+      return;
     }
     
-    // Мгновенное удаление подсветки
-    if (window.removeHighlightFromPage) {
-      window.removeHighlightFromPage(id);
+    try {
+      if (type === 'note') {
+        await deleteSoloNote(id, soloSession.id);
+      } else {
+        await deleteSoloQuote(id, soloSession.id);
+      }
+      
+      if (window.removeHighlightFromPage) {
+        window.removeHighlightFromPage(id);
+      }
+      
+      window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+    } catch (error) {
+      console.error('Error deleting annotation:', error);
+      alert('Ошибка при удалении');
     }
-    
-    window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
-  } catch (error) {
-    console.error('Error deleting annotation:', error);
-    alert('Ошибка при удалении');
-  }
-};
+  };
 
   const handleAnnotationClick = async (annotationId, startIndex) => {
     if (window.scrollToAnnotation) {
@@ -247,15 +245,14 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
   };
 
   const handleToggleSidebar = () => {
-  setIsSidebarOpen(!isSidebarOpen);
-  
-  // После изменения видимости панели перерисовываем подсветки
-  setTimeout(() => {
-    if (window.refreshAllHighlights) {
-      window.refreshAllHighlights();
-    }
-  }, 100);
-};
+    setIsSidebarOpen(!isSidebarOpen);
+    
+    setTimeout(() => {
+      if (window.refreshAllHighlights) {
+        window.refreshAllHighlights();
+      }
+    }, 100);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -270,70 +267,71 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Загрузка...</div>;
+    return (
+      <div className="reader-loading">
+        <div className="reader-loading-text">Загрузка...</div>
+      </div>
+    );
   }
 
   const openEditModal = (id, type, currentColor, currentComment, selectedText) => {
-  if (type !== 'note') {
-    alert('Редактирование доступно только для заметок');
-    return;
-  }
-  setEditingAnnotation({ id, color: currentColor, comment: currentComment, selected_text: selectedText });
-  setEditModalOpen(true);
-};
+    if (type !== 'note') {
+      alert('Редактирование доступно только для заметок');
+      return;
+    }
+    setEditingAnnotation({ id, color: currentColor, comment: currentComment, selected_text: selectedText });
+    setEditModalOpen(true);
+  };
 
-const handleEditNote = async (color, comment) => {
-  if (!editingAnnotation) return;
-  
-  try {
-    const updateData = {
-      id: editingAnnotation.id,
-      solo_session_id: soloSession.id,
-      comment: comment,
-      color: color,
-      selected_text: editingAnnotation.selected_text,
-      start_index: editingAnnotation.start_index,
-      end_index: editingAnnotation.end_index
-    };
+  const handleEditNote = async (color, comment) => {
+    if (!editingAnnotation) return;
     
-    await updateSoloNote(updateData);
-    
-    // Обновляем аннотацию в состоянии
-    if (window.updateAnnotation) {
-      window.updateAnnotation(editingAnnotation.id, color, comment);
+    try {
+      const updateData = {
+        id: editingAnnotation.id,
+        solo_session_id: soloSession.id,
+        comment: comment,
+        color: color,
+        selected_text: editingAnnotation.selected_text,
+        start_index: editingAnnotation.start_index,
+        end_index: editingAnnotation.end_index
+      };
+      
+      await updateSoloNote(updateData);
+      
+      if (window.updateAnnotation) {
+        window.updateAnnotation(editingAnnotation.id, color, comment);
+      }
+      
+      if (window.refreshAllHighlights) {
+        setTimeout(() => {
+          window.refreshAllHighlights();
+        }, 50);
+      }
+      
+      setEditModalOpen(false);
+      setEditingAnnotation(null);
+      window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+      
+    } catch (error) {
+      console.error('Error editing note:', error);
+      alert('Ошибка при редактировании');
     }
-    
-    // Перерисовываем все подсветки
-    if (window.refreshAllHighlights) {
-      console.log('Calling refreshAllHighlights');
-      setTimeout(() => {
-        window.refreshAllHighlights();
-      }, 50);
-    }
-    
-    setEditModalOpen(false);
-    setEditingAnnotation(null);
-    window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
-    
-  } catch (error) {
-    console.error('Error editing note:', error);
-    alert('Ошибка при редактировании');
-  }
-};
+  };
 
   return (
-    <div className='relative h-screen flex flex-col'>
+    <div className="reader-container">
       <ReaderHeader 
         isSession={false} 
-    onSettingsClick={() => setShowSettingsModal(true)}
-    onToggleSidebar={handleToggleSidebar}
-    isSidebarOpen={isSidebarOpen}
-    bookTitle={bookTitle}
-    bookAuthor={bookAuthor}
-    globalSettings={readerSettings}
+        onSettingsClick={() => setShowSettingsModal(true)}
+        onToggleSidebar={handleToggleSidebar}
+        isSidebarOpen={isSidebarOpen}
+        bookTitle={bookTitle}
+        bookAuthor={bookAuthor}
+        globalSettings={readerSettings}
       />
       
-      <div className='flex flex-1 min-h-0'>
+      <div className="reader-layout">
         {isSidebarOpen && (
           <ReaderAside 
             showNoteModal={showNoteModal}
@@ -343,20 +341,20 @@ const handleEditNote = async (color, comment) => {
             onAddNote={handleAddNote}
             onDeleteAnnotation={handleDeleteAnnotation}
             onAnnotationClick={handleAnnotationClick}
-             onEditAnnotation={openEditModal}
-
+            onEditAnnotation={openEditModal}
+            isSidebarOpen={isSidebarOpen}
           />
         )}
 
         <main 
-    className="flex-1 p-10 overflow-y-auto" 
-    style={{ 
-        backgroundColor: readerSettings?.background_color === 'dark' ? '#2a2a2a' 
-            : readerSettings?.background_color === 'beige' ? '#f5f0e8' 
-            : '#ffffff'
-    }}
->
-    {bookId && soloSession ? (
+          className="reader-main"
+          style={{ 
+            backgroundColor: readerSettings?.background_color === 'dark' ? '#2a2a2a' 
+              : readerSettings?.background_color === 'beige' ? '#f5f0e8' 
+              : '#ffffff'
+          }}
+        >
+          {bookId && soloSession ? (
             <ErrorBoundary>
               <BookReader 
                 bookId={bookId}
@@ -368,11 +366,11 @@ const handleEditNote = async (color, comment) => {
               />
             </ErrorBoundary>
           ) : (
-            <div className="text-center text-red-500 p-10">
-              <p>Ошибка: не удалось загрузить книгу</p>
+            <div className="reader-error">
+              <p className="reader-error-message">Ошибка: не удалось загрузить книгу</p>
               <button 
                 onClick={() => window.history.back()}
-                className="mt-4 px-4 py-2 bg-accent-1 text-beige-1 rounded"
+                className="reader-error-button"
               >
                 Вернуться назад
               </button>
@@ -402,19 +400,20 @@ const handleEditNote = async (color, comment) => {
           currentSettings={readerSettings}
         />
       )}
+      
       {editModalOpen && editingAnnotation && (
-  <ReaderModal
-    onClose={() => {
-      setEditModalOpen(false);
-      setEditingAnnotation(null);
-    }}
-    selectedText={editingAnnotation.selected_text}
-    initialComment={editingAnnotation.comment}
-    initialColor={editingAnnotation.color}
-    onAddNote={handleEditNote}
-    isEdit={true}
-  />
-)}
+        <ReaderModal
+          onClose={() => {
+            setEditModalOpen(false);
+            setEditingAnnotation(null);
+          }}
+          selectedText={editingAnnotation.selected_text}
+          initialComment={editingAnnotation.comment}
+          initialColor={editingAnnotation.color}
+          onAddNote={handleEditNote}
+          isEdit={true}
+        />
+      )}
     </div>
   );
 }

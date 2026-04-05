@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ReaderNote from './ReaderNote.jsx';
 import ReaderModal from './ReaderModal.jsx';
 import { getSoloNotes, getSoloQuotes } from '../../services/api';
+import '../../styles/components/reader.css';
 
 export default function ReaderAside({ 
   showNoteModal, 
@@ -12,7 +13,8 @@ export default function ReaderAside({
   onAddNote,
   onDeleteAnnotation,
   onAnnotationClick,
-  onEditAnnotation
+  onEditAnnotation,
+  isSidebarOpen = true 
 }) {
   const [currentType, setType] = useState('all');
   const [annotations, setAnnotations] = useState([]);
@@ -80,29 +82,31 @@ export default function ReaderAside({
 
   if (loading) {
     return (
-      <div className="max-w-[15vw] min-w-[15vw] flex flex-col bg-gray text-beige-1 h-full items-center justify-center sidebar-transition">
-        <p>Загрузка аннотаций...</p>
+      <div className={`reader-aside ${!isSidebarOpen ? 'reader-aside-hidden' : ''}`}>
+        <div className="reader-aside-loading">Загрузка аннотаций...</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[15vw] min-w-[15vw] flex flex-col bg-gray text-beige-1 h-full sidebar-transition">
-      <h2 className='px-2 ml-2 mt-4 text-lg'>Мои аннотации</h2>
+    <div className={`reader-aside ${!isSidebarOpen ? 'reader-aside-hidden' : ''}`}>
+      <h2 className="reader-aside-title">Мои аннотации</h2>
       
-      <select
-        value={currentType}
-        onChange={(e) => setType(e.target.value)}
-        className="ml-2 mt-2 px-2 py-1 rounded-xl bg-accent-2 text-beige-1 focus:outline-none cursor-pointer"
-      >
-        <option value="all">Все</option>
-        <option value="note">Заметки</option>
-        <option value="quote">Цитаты</option>
-      </select>
+      <div className="reader-aside-filter">
+        <select
+          value={currentType}
+          onChange={(e) => setType(e.target.value)}
+          className="reader-aside-select"
+        >
+          <option value="all">Все</option>
+          <option value="note">Заметки</option>
+          <option value="quote">Цитаты</option>
+        </select>
+      </div>
 
-      <div className='flex-1 overflow-y-auto flex flex-col gap-3 mt-4 pb-4'>
+      <div className="reader-aside-annotations">
         {filteredAnnotations.length === 0 ? (
-          <p className="text-beige-1/70 text-sm text-center mt-10 px-2">
+          <p className="reader-aside-empty">
             Нет аннотаций<br/>
             Выделите текст в книге, чтобы создать цитату или заметку
           </p>

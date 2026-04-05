@@ -1,11 +1,11 @@
 // frontend/src/pages/MainView.jsx
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/mainComps/Header.jsx';
 import NavAside from '../components/mainComps/NavAside.jsx';
 import { getLastOpenedBook, getRecentSessions, getRecentAnswers } from '../services/api';
 import Progressbar from '../components/UI/Progressbar';
+import '../styles/pages/main.css';
 
 export default function MainView() {
     const [lastBook, setLastBook] = useState(null);
@@ -15,12 +15,24 @@ export default function MainView() {
     const wsRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
     const isMounted = useRef(true);
-    
 
     useEffect(() => {
         isMounted.current = true;
         loadData();
-        connectWebSocket();
+        setupWebSocket();
+        
+        const handleProgressUpdate = (event) => {
+            const { bookId, page } = event.detail;
+            if (lastBook && lastBook.id === bookId) {
+                const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
+                if (totalPages && parseInt(totalPages) > 0) {
+                    const progress = Math.round((page / parseInt(totalPages)) * 100);
+                    setLastBook(prev => ({ ...prev, progress: Math.min(progress, 100) }));
+                }
+            }
+        };
+        
+        window.addEventListener('progressUpdated', handleProgressUpdate);
         
         return () => {
             isMounted.current = false;
@@ -31,84 +43,14 @@ export default function MainView() {
                 wsRef.current.close();
                 wsRef.current = null;
             }
+            window.removeEventListener('progressUpdated', handleProgressUpdate);
         };
-    }, []);
+    }, [lastBook?.id]);
 
-    // frontend/src/pages/MainView.jsx
-
-useEffect(() => {
-  loadData();
-  setupWebSocket();
-  
-  // Слушаем обновления прогресса
-  const handleProgressUpdate = (event) => {
-    const { bookId, page } = event.detail;
-    // Обновляем прогресс последней открытой книги
-    if (lastBook && lastBook.id === bookId) {
-      // Получаем общее количество страниц
-      const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
-      if (totalPages && parseInt(totalPages) > 0) {
-        const progress = Math.round((page / parseInt(totalPages)) * 100);
-        setLastBook(prev => ({ ...prev, progress: Math.min(progress, 100) }));
-      }
-    }
-  };
-  
-  window.addEventListener('progressUpdated', handleProgressUpdate);
-  
-  return () => {
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
-    window.removeEventListener('progressUpdated', handleProgressUpdate);
-  };
-}, []);
-
-// frontend/src/pages/MainView.jsx
-
-const setupWebSocket = () => {
-  const token = localStorage.getItem('access_token');
-  if (!token) return;
-  
-  try {
-    const ws = new WebSocket(`ws://localhost:5000/ws/notifications?token=${encodeURIComponent(token)}`);
-    
-    ws.onopen = () => {
-      console.log('Notification WebSocket connected');
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('WebSocket message:', data);
-        if (data.type === 'new_answer') {
-          loadNotifications();
-        }
-      } catch (e) {
-        console.error('Error parsing message:', e);
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      setTimeout(setupWebSocket, 5000);
-    };
-    
-    wsRef.current = ws;
-  } catch (err) {
-    console.error('Failed to setup WebSocket:', err);
-  }
-};
-
-    const connectWebSocket = () => {
+    const setupWebSocket = () => {
         const token = localStorage.getItem('access_token');
         if (!token) return;
         
-        // Закрываем существующее соединение
         if (wsRef.current) {
             wsRef.current.close();
             wsRef.current = null;
@@ -139,11 +81,9 @@ const setupWebSocket = () => {
         ws.onclose = (event) => {
             console.log('WebSocket disconnected:', event.code, event.reason);
             wsRef.current = null;
-            
-            // Переподключаемся через 5 секунд
             if (isMounted.current) {
                 reconnectTimeoutRef.current = setTimeout(() => {
-                    connectWebSocket();
+                    setupWebSocket();
                 }, 5000);
             }
         };
@@ -214,10 +154,10 @@ const setupWebSocket = () => {
         return (
             <>
                 <Header />
-                <div className='flex'>
+                <div className="flex">
                     <NavAside />
-                    <div className='bg-beige-1 flex text-accent-2 w-screen p-10 justify-center items-center'>
-                        <div>Загрузка...</div>
+                    <div className="main-container">
+                        <div className="reader-loading-text">Загрузка...</div>
                     </div>
                 </div>
             </>
@@ -227,60 +167,62 @@ const setupWebSocket = () => {
     return (
         <>
             <Header />
-            <div className='flex'>
+            <div className="flex">
                 <NavAside />
-                <div className='bg-beige-1 flex text-accent-2 w-screen p-10'>
-                    <div className='flex-3 text-blue'>
-                        <h1 className='text-2xl mb-5'>Продолжить</h1>
-                        {lastBook ? (
-                            <div className='flex rounded-2xl bg-beige-2 p-4 mb-6'>
-                                <div className='w-24 h-32 bg-accent-1/20 rounded-lg flex items-center justify-center mr-4'>
-                                    <svg className="w-12 h-12 text-accent-1" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M3.5 2.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5h-9z"/>
-                                    </svg>
-                                </div>
-                                <div className='w-full'>
-                                    <h2 className='text-2xl text-blue'>{lastBook.title}</h2>
-                                    <h3 className='text-sm text-gray-600'>{lastBook.author}</h3>
-                                    <Progressbar progress={lastBook.progress || 0} />
-                                    <div className='my-4'>
-                                        Прогресс: {lastBook.progress || 0}%
+                <div className="main-container">
+                    <div className="main-left">
+                        <div className="continue-section">
+                            <h1 className="section-title">Продолжить</h1>
+                            {lastBook ? (
+                                <div className="continue-card">
+                                    <div className="continue-card-image-placeholder">
+                                        <svg className="continue-card-placeholder-icon" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M3.5 2.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5h-9z"/>
+                                        </svg>
                                     </div>
-                                    <Link to={`/reader?bookId=${lastBook.id}&title=${encodeURIComponent(lastBook.title)}&author=${encodeURIComponent(lastBook.author)}`}>
-                                        <button className='bg-accent-1 text-beige-1 rounded-2xl px-8 py-2 hover:cursor-pointer'>
-                                            Продолжить чтение
-                                        </button>
-                                    </Link>
+                                    <div className="continue-card-content">
+                                        <h2 className="continue-card-title">{lastBook.title}</h2>
+                                        <h3 className="continue-card-author">{lastBook.author}</h3>
+                                        <Progressbar progress={lastBook.progress || 0} />
+                                        <div className="continue-card-meta">
+                                            Прогресс: {lastBook.progress || 0}%
+                                        </div>
+                                        <Link to={`/reader?bookId=${lastBook.id}&title=${encodeURIComponent(lastBook.title)}&author=${encodeURIComponent(lastBook.author)}`}>
+                                            <button className="continue-card-btn">
+                                                Продолжить чтение
+                                            </button>
+                                        </Link>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className='flex rounded-2xl bg-beige-2 p-4 mb-6 text-center text-gray-500'>
-                                Нет открытых книг. Перейдите в библиотеку, чтобы добавить книгу.
-                            </div>
-                        )}
+                            ) : (
+                                <div className="continue-card-empty">
+                                    Нет открытых книг. Перейдите в библиотеку, чтобы добавить книгу.
+                                </div>
+                            )}
+                        </div>
                         
-                        <div className='flex-col justify-between my-6'>
-                            <div className='flex justify-between'>
-                                <h1 className='text-2xl'>Ваши сессии</h1>
-                                <Link to='/sessions'>
-                                    <h3 className='text-accent-1 text-lg mr-8'>Смотреть все</h3>
+                        <div className="sessions-section">
+                            <div className="section-header">
+                                <h1 className="section-title">Ваши сессии</h1>
+                                <Link to="/sessions">
+                                    <h3 className="view-all-link">Смотреть все</h3>
                                 </Link>
                             </div>
-                            <div className='grid grid-cols-2 gap-10'>
+                            <div className="sessions-grid">
                                 {recentSessions.length > 0 ? (
                                     recentSessions.map((session) => (
-                                        <div key={session.id} className='flex rounded-2xl bg-beige-2 p-4'>
-                                            <div className='w-20 h-28 bg-accent-1/20 rounded-lg flex items-center justify-center mr-4'>
-                                                <svg className="w-8 h-8 text-accent-1" fill="currentColor" viewBox="0 0 16 16">
+                                        <div key={session.id} className="session-card">
+                                            <div className="session-card-image-placeholder">
+                                                <svg className="session-card-placeholder-icon" fill="currentColor" viewBox="0 0 16 16">
                                                     <path d="M3.5 2.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5h-9z"/>
                                                 </svg>
                                             </div>
-                                            <div className='w-full'>
-                                                <h2 className='text-xl text-blue'>{session.name}</h2>
-                                                <h3 className='text-sm text-gray-600'>{session.book_title} — {session.book_author}</h3>
-                                                <div className='flex my-4 justify-end'>
+                                            <div className="session-card-content">
+                                                <h2 className="session-card-title">{session.name}</h2>
+                                                <h3 className="session-card-author">{session.book_title} — {session.book_author}</h3>
+                                                <div className="session-card-action">
                                                     <Link to={`/session-reader?sessionId=${session.id}&name=${encodeURIComponent(session.name)}`}>
-                                                        <button className='bg-accent-1 text-beige-1 rounded-2xl px-6 py-1 hover:cursor-pointer'>
+                                                        <button className="session-card-btn">
                                                             Перейти
                                                         </button>
                                                     </Link>
@@ -289,7 +231,7 @@ const setupWebSocket = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className='col-span-2 text-center text-gray-500 py-8 bg-beige-2 rounded-2xl'>
+                                    <div className="sessions-empty-message">
                                         Нет активных сессий. Создайте новую сессию.
                                     </div>
                                 )}
@@ -297,41 +239,51 @@ const setupWebSocket = () => {
                         </div>
                     </div>
                     
-                    <div className='flex flex-col flex-1 text-blue'>
-                        <div className='flex flex-col m-4 p-4 border border-main-3 rounded-lg bg-main-3 h-fit'>
-                            <div>
-                                <div className='flex justify-between'>
-                                    <h2 className="text-lg font-medium">Новые ответы</h2>
-                                    {notifications.length > 0 && (
-                                        <span className="text-xs text-accent-1">{notifications.length}</span>
-                                    )}
-                                </div>
-                                <div className='mt-3 max-h-96 overflow-y-auto'>
-                                    {notifications.length === 0 ? (
-                                        <div className="text-center py-4 text-gray-500">
-                                            Нет новых ответов
-                                        </div>
-                                    ) : (
-                                        notifications.map((notification) => (
-                                            <Link 
-    key={notification.id}
-    to={`/session-reader?sessionId=${notification.session_id}&highlightNoteId=${notification.note_id}`}
-    className="block mb-3 p-3 bg-beige-2 rounded-lg hover:bg-accent-1/10 transition-colors cursor-pointer"
->
-
-                                                <p className="text-sm font-medium text-blue">
-                                                    {notification.message}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1 italic line-clamp-2">
-                                                    "{notification.answer_text}"
-                                                </p>
-                                                <p className="text-xs text-gray-400 mt-2">
-                                                    {formatDate(notification.created_at)}
-                                                </p>
-                                            </Link>
-                                        ))
-                                    )}
-                                </div>
+                    <div className="main-right">
+                        <div className="notifications-card">
+                            <div className="notifications-header">
+                                <h3>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                    </svg>
+                                    Новые ответы
+                                </h3>
+                                {notifications.length > 0 && (
+                                    <span className="notifications-badge">{notifications.length}</span>
+                                )}
+                                <svg className="notifications-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M6 9l6 6 6-6" />
+                                </svg>
+                            </div>
+                            <div className="notifications-list">
+                                {notifications.length === 0 ? (
+                                    <div className="empty-state">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <p>Нет новых ответов</p>
+                                    </div>
+                                ) : (
+                                    notifications.map((notification) => (
+                                        <Link 
+                                            key={notification.id}
+                                            to={`/session-reader?sessionId=${notification.session_id}&highlightNoteId=${notification.note_id}`}
+                                            className="notification-item"
+                                        >
+                                            <div className="notification-icon">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                                </svg>
+                                            </div>
+                                            <div className="notification-content">
+                                                <p className="notification-text">{notification.message}</p>
+                                                <p className="notification-text quote">"{notification.answer_text}"</p>
+                                                <p className="notification-time">{formatDate(notification.created_at)}</p>
+                                            </div>
+                                        </Link>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

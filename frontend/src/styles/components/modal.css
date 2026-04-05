@@ -1,0 +1,174 @@
+/* src/styles/components/modal.css */
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-container {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  max-width: 28rem;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid #f0e7db;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10001;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9c8a76;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #ff8c1a;
+}
+
+.modal-close svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.modal-error {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Форма в модалке */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a3b2c;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(212, 163, 115, 0.3);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #ffb347;
+  box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.1);
+}
+
+.form-input::placeholder {
+  color: #cbd5e1;
+}
+
+/* Кнопки формы */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.form-button-cancel {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ffb347;
+  background: transparent;
+  color: #ffb347;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-button-cancel:hover {
+  background: rgba(255, 179, 71, 0.1);
+}
+
+.form-button-submit {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #ffb347, #ff8c1a);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-button-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 140, 26, 0.3);
+}
+
+.form-button-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Адаптивность модалки */
+@media (max-width: 640px) {
+  .modal-container {
+    width: 95%;
+    padding: 1rem;
+  }
+  
+  .modal-title {
+    font-size: 1.125rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-button-cancel,
+  .form-button-submit {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -1,7 +1,10 @@
-// frontend/src/components/readerComps/BookReader.jsx
+// frontend/src/utils/BookReader.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { getBookPage, getSoloAnnotations, getSessionAnnotations } from '../services/api';
 import { updateSoloProgress, getSoloProgress, updateSessionProgress, getSessionProgress } from '../services/api';
+import '../styles/components/reader.css';
+import '../styles/components/annotations.css';
+
 export default function BookReader({ 
   bookId, 
   soloSessionId,
@@ -11,7 +14,6 @@ export default function BookReader({
   settings,
   currentUser,
 }) {
-  console.log('BookReader mounted with settings:', settings);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [content, setContent] = useState('');
@@ -21,9 +23,8 @@ export default function BookReader({
   const [loading, setLoading] = useState(true);
   const isInitializedRef = useRef(false);
   const containerRef = useRef(null);
-   const wsRef = useRef(null);
-   const initialLoadRef = useRef(false);
-;
+  const initialLoadRef = useRef(false);
+
   const getGlobalIndex = (node, offset) => {
     if (!containerRef.current) return 0;
     const range = document.createRange();
@@ -81,24 +82,45 @@ export default function BookReader({
     return null;
   };
 
-  const getQuoteColor = (color) => {
-    const colors = {
-      yellow: '#fef9c3',
-      green: '#bbf7d0',
-      blue: '#bfdbfe',
-      pink: '#fce7f3'
+  // ========== ЦВЕТА ДЛЯ ЦИТАТ (CSS классы) ==========
+  const getQuoteColorClass = (color) => {
+    const classes = {
+      yellow: 'highlighted-quote yellow',
+      green: 'highlighted-quote green',
+      blue: 'highlighted-quote blue',
+      pink: 'highlighted-quote pink'
     };
-    return colors[color] || '#fef9c3';
+    return classes[color] || 'highlighted-quote yellow';
   };
 
-  const getNoteColor = (color) => {
-    const colors = {
-      yellow: '#fbbf24',
-      green: '#4ade80',
-      blue: '#60a5fa',
-      pink: '#f472b6'
+  // ========== ЦВЕТА ДЛЯ ЗАМЕТОК (CSS классы) ==========
+  const getNoteColorClass = (color) => {
+    const classes = {
+      yellow: 'highlighted-note yellow',
+      green: 'highlighted-note green',
+      blue: 'highlighted-note blue',
+      pink: 'highlighted-note pink'
     };
-    return colors[color] || '#fbbf24';
+    return classes[color] || 'highlighted-note yellow';
+  };
+
+  // ========== ПРИМЕНЕНИЕ ПОДСВЕТКИ ==========
+  const applyHighlight = (span, annotation, isOwn = true) => {
+    const type = annotation.type || (annotation.comment ? 'note' : 'quote');
+    
+    if (type === 'quote') {
+      span.className = getQuoteColorClass(annotation.color);
+      span.style.removeProperty('background-color');
+      span.style.removeProperty('border-left');
+    } else {
+      if (isOwn) {
+        span.className = getNoteColorClass(annotation.color);
+        span.style.removeProperty('border-bottom-color');
+        span.style.removeProperty('background-color');
+      } else {
+        span.className = 'highlighted-note-other';
+      }
+    }
   };
 
   const applyAllHighlights = () => {
@@ -117,30 +139,15 @@ export default function BookReader({
       span.id = String(annotation.id);
       span.setAttribute('data-annotation-id', annotation.id);
       
-      const type = annotation.type || (annotation.comment ? 'note' : 'quote');
+      let isOwn = false;
+      if (soloSessionId) {
+        isOwn = true;
+      } else if (sessionId) {
+        const authorId = annotation.author_id || annotation.author?.id;
+        isOwn = authorId === currentUser?.user_id;
+      }
       
-      if (type === 'quote') {
-        span.className = 'highlighted-quote';
-        span.style.backgroundColor = getQuoteColor(annotation.color);
-      } else {
-        let isOwn = false;
-  if (soloSessionId) {
-    isOwn = true; // В личном чтении все заметки принадлежат текущему пользовате
-        
-         } else if (sessionId) {
-    const authorId = annotation.author_id || annotation.author?.id;
-    isOwn = authorId === currentUser?.user_id;
-  }
-  
-  if (isOwn) {
-    span.className = 'highlighted-note';
-    span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
-  } else {
-    span.className = 'highlighted-note-other';
-    span.style.borderBottom = '2px dashed #9ca3af';
-    span.style.paddingBottom = '2px';
-  }
-}
+      applyHighlight(span, annotation, isOwn);
       
       span.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -189,138 +196,102 @@ export default function BookReader({
     return [];
   };
 
-const loadPage = async (page) => {
-  try {
-    setLoading(true);
-    const data = await getBookPage(bookId, page);
-    
-    setContent(data.content);
-    setFullText(data.full_text || '');
-    setPageStartIndex(data.start_index || 0);
-    setTotalPages(data.total_pages || 1);
-    setCurrentPage(page);
-    
-    localStorage.setItem(`book_${bookId}_page`, page);
-
-    // Сохраняем прогресс в бэкенд
-    if (soloSessionId) {
-      await updateSoloProgress(soloSessionId, page);
-      // Отправляем событие обновления прогресса для главной страницы
-      window.dispatchEvent(new CustomEvent('progressUpdated', { detail: { bookId, page } }));
-    } else if (sessionId) {
-      await updateSessionProgress(sessionId, page);
-    }
-    
-    const allAnnotations = await loadAnnotationsForPage();
-    
-    const pageAnnotations = allAnnotations.filter(ann => 
-      ann.start_index >= data.start_index && ann.end_index <= data.end_index
-    );
-    
-    setAnnotations(pageAnnotations);
-    
-    // Применяем настройки после загрузки контента
-    setTimeout(() => {
-      if (containerRef.current && settings) {
-        const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
-        const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
-        const fontSize = fontSizeMap[fontSizeValue] || '14px';
-        
-        const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
-        const textColor = textColors[settings.background_color] || '#374151';
-        
-        const paragraphs = containerRef.current.querySelectorAll('p');
-        paragraphs.forEach(p => {
-          p.style.fontSize = fontSize;
-          p.style.color = textColor;
-        });
-      }
-    }, 100);
-    
-  } catch (err) {
-    console.error('Error loading page:', err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-// Загружаем книгу при монтировании
-useEffect(() => {
-  if (bookId && !initialLoadRef.current) {
-    initialLoadRef.current = true;
-    const savedPage = localStorage.getItem(`book_${bookId}_page`);
-    const pageToLoad = savedPage ? parseInt(savedPage) : 0;
-    loadPage(pageToLoad);
-  }
-}, [bookId]);
-
-// Загружаем сохранённый прогресс из бэкенда
-useEffect(() => {
-  const loadProgress = async () => {
+  const loadPage = async (page) => {
     try {
+      setLoading(true);
+      const data = await getBookPage(bookId, page);
+      
+      setContent(data.content);
+      setFullText(data.full_text || '');
+      setPageStartIndex(data.start_index || 0);
+      setTotalPages(data.total_pages || 1);
+      setCurrentPage(page);
+      
+      localStorage.setItem(`book_${bookId}_page`, page);
+
       if (soloSessionId) {
-        const lastPage = await getSoloProgress(soloSessionId);
-        if (lastPage > 0 && lastPage !== currentPage) {
-          await loadPage(lastPage);
-        }
+        await updateSoloProgress(soloSessionId, page);
+        window.dispatchEvent(new CustomEvent('progressUpdated', { detail: { bookId, page } }));
       } else if (sessionId) {
-        const lastPage = await getSessionProgress(sessionId);
-        if (lastPage > 0 && lastPage !== currentPage) {
-          await loadPage(lastPage);
-        }
+        await updateSessionProgress(sessionId, page);
       }
+      
+      const allAnnotations = await loadAnnotationsForPage();
+      
+      const pageAnnotations = allAnnotations.filter(ann => 
+        ann.start_index >= data.start_index && ann.end_index <= data.end_index
+      );
+      
+      setAnnotations(pageAnnotations);
+      
+      setTimeout(() => {
+        if (containerRef.current && settings) {
+          applyTextStyles();
+        }
+      }, 100);
+      
     } catch (err) {
-      console.error('Error loading progress:', err);
+      console.error('Error loading page:', err);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Загружаем прогресс только после того, как загрузилась первая страница
-  if (content && !loading && totalPages > 1 && currentPage === 0) {
-    loadProgress();
-  }
-}, [soloSessionId, sessionId, content, loading, totalPages, currentPage]);
+
+  const applyTextStyles = () => {
+    if (!containerRef.current || !settings) return;
+    
+    const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
+    const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
+    const fontSize = fontSizeMap[fontSizeValue] || '14px';
+    
+    const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
+    const textColor = textColors[settings.background_color] || '#374151';
+    
+    const paragraphs = containerRef.current.querySelectorAll('p');
+    paragraphs.forEach(p => {
+      p.style.fontSize = fontSize;
+      p.style.color = textColor;
+    });
+  };
 
   useEffect(() => {
-    if (bookId && !isInitializedRef.current) {
-      isInitializedRef.current = true;
-      
-      const loadInitialPage = async () => {
-        let lastPage = 0;
-        
-        // Получаем сохранённый прогресс
-        if (soloSessionId) {
-          lastPage = await getSoloProgress(soloSessionId);
-        } else if (sessionId) {
-          lastPage = await getSessionProgress(sessionId);
-        }
-        
-        // Если есть сохранённый прогресс, загружаем его, иначе загружаем сохранённую страницу из localStorage или 0
-        if (lastPage > 0 && lastPage < totalPages) {
-          await loadPage(lastPage, false); // Не сохраняем прогресс повторно
-        } else {
-          const savedPage = localStorage.getItem(`book_${bookId}_page`);
-          const pageToLoad = savedPage ? parseInt(savedPage) : 0;
-          await loadPage(pageToLoad, true);
-        }
-      };
-      
-      loadInitialPage();
-    }
-  }, [bookId, soloSessionId, sessionId]); 
-
-  useEffect(() => {
-    if (content && !loading && annotations.length > 0) {
-      applyAllHighlights();
-    }
-  }, [annotations]);
-
-  useEffect(() => {
-    if (bookId) {
+    if (bookId && !initialLoadRef.current) {
+      initialLoadRef.current = true;
       const savedPage = localStorage.getItem(`book_${bookId}_page`);
       const pageToLoad = savedPage ? parseInt(savedPage) : 0;
       loadPage(pageToLoad);
     }
   }, [bookId]);
+
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        if (soloSessionId) {
+          const lastPage = await getSoloProgress(soloSessionId);
+          if (lastPage > 0 && lastPage !== currentPage) {
+            await loadPage(lastPage);
+          }
+        } else if (sessionId) {
+          const lastPage = await getSessionProgress(sessionId);
+          if (lastPage > 0 && lastPage !== currentPage) {
+            await loadPage(lastPage);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading progress:', err);
+      }
+    };
+    
+    if (content && !loading && totalPages > 1 && currentPage === 0) {
+      loadProgress();
+    }
+  }, [soloSessionId, sessionId, content, loading, totalPages, currentPage]);
+
+  useEffect(() => {
+    if (content && !loading && annotations.length > 0) {
+      applyAllHighlights();
+    }
+  }, [annotations, content, loading]);
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
@@ -346,6 +317,7 @@ useEffect(() => {
     }
   };
 
+  // Глобальные функции для работы с подсветками
   useEffect(() => {
     window.applyHighlightToCurrentPage = (annotation) => {
       if (!containerRef.current) return;
@@ -360,23 +332,8 @@ useEffect(() => {
       span.id = String(annotation.id);
       span.setAttribute('data-annotation-id', annotation.id);
       
-      const type = annotation.type || (annotation.comment ? 'note' : 'quote');
-      
-      if (type === 'quote') {
-        span.className = 'highlighted-quote';
-        span.style.backgroundColor = getQuoteColor(annotation.color);
-      } else {
-        const isOwn = annotation.author_id === currentUser?.user_id;
-        
-        if (isOwn) {
-          span.className = 'highlighted-note';
-          span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
-        } else {
-          span.className = 'highlighted-note-other';
-          span.style.borderBottom = '2px dashed #9ca3af';
-          span.style.paddingBottom = '2px';
-        }
-      }
+      const isOwn = annotation.author_id === currentUser?.user_id;
+      applyHighlight(span, annotation, isOwn);
       
       span.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -459,30 +416,15 @@ useEffect(() => {
         span.id = String(annotation.id);
         span.setAttribute('data-annotation-id', annotation.id);
         
-        const type = annotation.type || (annotation.comment ? 'note' : 'quote');
-        
-        if (type === 'quote') {
-          span.className = 'highlighted-quote';
-          span.style.backgroundColor = getQuoteColor(annotation.color);
-        } else {
+        let isOwn = false;
+        if (soloSessionId) {
+          isOwn = true;
+        } else if (sessionId) {
           const authorId = annotation.author_id || annotation.author?.id;
-          let isOwn = false;
-if (soloSessionId) {
-  isOwn = true; // В личном чтении все заметки свои
-} else if (sessionId) {
-  const authorId = annotation.author_id || annotation.author?.id;
-  isOwn = authorId === currentUser?.user_id;
-}
-          
-          if (isOwn) {
-    span.className = 'highlighted-note';
-    span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
-  } else {
-    span.className = 'highlighted-note-other';
-    span.style.borderBottom = '2px dashed #9ca3af';
-    span.style.paddingBottom = '2px';
-  }
-}
+          isOwn = authorId === currentUser?.user_id;
+        }
+        
+        applyHighlight(span, annotation, isOwn);
         
         span.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -602,178 +544,110 @@ if (soloSessionId) {
       delete window.restoreHighlights;
       observer.disconnect();
     };
-  }, [totalPages, currentPage, annotations, content, loading, pageStartIndex, fullText, currentUser, onAnnotationClick]);
-// Применяем настройки после загрузки контента (когда появляются параграфы)
-useEffect(() => {
+  }, [totalPages, currentPage, annotations, content, loading, pageStartIndex, fullText, currentUser, onAnnotationClick, soloSessionId, sessionId]);
+
+  // Применяем настройки после загрузки контента
+  useEffect(() => {
     if (content && containerRef.current && settings) {
-        const fontSizeMap = {
-            12: '12px',
-            14: '14px',
-            16: '16px',
-            18: '18px'
-        };
-        
-        const fontSizeValue = typeof settings.font_size === 'string' 
-            ? parseInt(settings.font_size) 
-            : settings.font_size;
-        const fontSize = fontSizeMap[fontSizeValue] || '14px';
-        
-        const textColors = {
-            light: '#374151',
-            dark: '#e0e0e0',
-            beige: '#4a4a4a'
-        };
-        const textColor = textColors[settings.background_color] || '#374151';
-        
-        // Применяем ко всем элементам
-        const allElements = containerRef.current.querySelectorAll('*');
-        allElements.forEach(el => {
-            el.style.fontSize = fontSize;
-            el.style.color = textColor;
-        });
-        
-        // Специально для параграфов
-        const paragraphs = containerRef.current.querySelectorAll('p');
-        paragraphs.forEach(p => {
-            p.style.fontSize = fontSize;
-            p.style.color = textColor;
-        });
-        
-        console.log('Applied font size after content load:', fontSize);
+      applyTextStyles();
     }
-}, [content, settings]);
- useEffect(() => {
+  }, [content, settings]);
+
+  // Применяем настройки при их изменении
+  useEffect(() => {
     if (containerRef.current && settings) {
-        // Сохраняем все текущие подсветки перед изменением
-        const saveCurrentHighlights = () => {
-            const allSpans = document.querySelectorAll('span[data-annotation-id]');
-            const savedData = [];
-            allSpans.forEach(span => {
-                savedData.push({
-                    id: span.id,
-                    html: span.outerHTML,
-                    parent: span.parentNode,
-                    nextSibling: span.nextSibling
-                });
-            });
-            return savedData;
-        };
-        
-        // Восстанавливаем подсветки после изменения
-        const restoreHighlights = (savedData) => {
-            savedData.forEach(data => {
-                const existingSpan = document.getElementById(data.id);
-                if (!existingSpan && data.parent && data.parent.parentNode) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = data.html;
-                    const newSpan = tempDiv.firstChild;
-                    if (newSpan && data.nextSibling) {
-                        data.parent.insertBefore(newSpan, data.nextSibling);
-                    } else if (newSpan && data.parent) {
-                        data.parent.appendChild(newSpan);
-                    }
-                }
-            });
-        };
-        
-        // Сохраняем текущие подсветки
-        const savedHighlights = saveCurrentHighlights();
-        
-        // Применяем новые настройки
-        const fontSizeMap = {
-            12: '12px',
-            14: '14px',
-            16: '16px',
-            18: '18px'
-        };
-
-        // Преобразуем в число, если пришло строкой
-const fontSizeValue = typeof settings.font_size === 'string' 
-    ? parseInt(settings.font_size) 
-    : settings.font_size;
-        const fontSize = fontSizeMap[fontSizeValue] || '14px';
-        
-        const bgColors = {
-            light: '#ffffff',
-            dark: '#2a2a2a',
-            beige: '#f5f0e8'
-        };
-        const textColors = {
-            light: '#374151',
-            dark: '#e0e0e0',
-            beige: '#4a4a4a'
-        };
-        
-        const bgColor = bgColors[settings.background_color] || '#ffffff';
-        const textColor = textColors[settings.background_color] || '#374151';
-        
-        // Применяем к контейнеру
-        containerRef.current.style.backgroundColor = bgColor;
-        containerRef.current.style.fontSize = fontSize;
-        
-        // Применяем ко всем дочерним элементам
-        const allElements = containerRef.current.querySelectorAll('*');
-        allElements.forEach(el => {
-            el.style.fontSize = fontSize;
-            el.style.color = textColor;
+      const saveCurrentHighlights = () => {
+        const allSpans = document.querySelectorAll('span[data-annotation-id]');
+        const savedData = [];
+        allSpans.forEach(span => {
+          savedData.push({
+            id: span.id,
+            html: span.outerHTML,
+            parent: span.parentNode,
+            nextSibling: span.nextSibling
+          });
         });
-        
-        // Восстанавливаем подсветки после применения стилей
-        setTimeout(() => {
-            restoreHighlights(savedHighlights);
-            // Дополнительно перерисовываем на всякий случай
-            if (window.refreshAllHighlights) {
-                window.refreshAllHighlights();
+        return savedData;
+      };
+      
+      const restoreHighlights = (savedData) => {
+        savedData.forEach(data => {
+          const existingSpan = document.getElementById(data.id);
+          if (!existingSpan && data.parent && data.parent.parentNode) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data.html;
+            const newSpan = tempDiv.firstChild;
+            if (newSpan && data.nextSibling) {
+              data.parent.insertBefore(newSpan, data.nextSibling);
+            } else if (newSpan && data.parent) {
+              data.parent.appendChild(newSpan);
             }
-        }, 50);
+          }
+        });
+      };
+      
+      const savedHighlights = saveCurrentHighlights();
+      
+      const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
+      const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
+      const fontSize = fontSizeMap[fontSizeValue] || '14px';
+      
+      const bgColors = { light: '#ffffff', dark: '#2a2a2a', beige: '#f5f0e8' };
+      const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
+      
+      const bgColor = bgColors[settings.background_color] || '#ffffff';
+      const textColor = textColors[settings.background_color] || '#374151';
+      
+      containerRef.current.style.backgroundColor = bgColor;
+      containerRef.current.style.fontSize = fontSize;
+      
+      const allElements = containerRef.current.querySelectorAll('*');
+      allElements.forEach(el => {
+        el.style.fontSize = fontSize;
+        el.style.color = textColor;
+      });
+      
+      setTimeout(() => {
+        restoreHighlights(savedHighlights);
+        if (window.refreshAllHighlights) {
+          window.refreshAllHighlights();
+        }
+      }, 50);
     }
-}, [settings]);
+  }, [settings]);
 
-  if (loading) return <div className="p-10 text-center">Загрузка...</div>;
+  if (loading) return <div className="reader-loading-text">Загрузка...</div>;
 
   return (
-    <div className="flex flex-col h-full">
-      <div 
-    className="flex justify-between items-center p-4 border-b" 
-    style={{ 
-        backgroundColor: settings?.background_color === 'dark' ? '#2a2a2a' 
-            : settings?.background_color === 'beige' ? '#f5f0e8' 
-            : '#ffffff',
-        color: settings?.background_color === 'dark' ? '#e0e0e0' : '#374151',
-        borderBottomColor: settings?.background_color === 'dark' ? '#4a4a4a' : '#e5e7eb'
-    }}
->
-        <span style={{ color: settings?.background_color === 'dark' ? '#e0e0e0' : '#374151' }}>
-    Страница {currentPage + 1} из {totalPages}
-</span>
-        <div className="space-x-2">
-          <button 
-    onClick={() => loadPage(currentPage - 1)} 
-    disabled={currentPage === 0}
-    className="px-4 py-2 rounded disabled:opacity-50 transition-colors"
-    style={{
-        backgroundColor: settings?.background_color === 'dark' ? '#4a4a4a' : '#ef4444',
-        color: '#ffffff'
-    }}
->
-    ← Назад
-</button>
-<button 
-    onClick={() => loadPage(currentPage + 1)} 
-    disabled={currentPage === totalPages - 1}
-    className="px-4 py-2 rounded disabled:opacity-50 transition-colors"
-    style={{
-        backgroundColor: settings?.background_color === 'dark' ? '#4a4a4a' : '#ef4444',
-        color: '#ffffff'
-    }}
->
-    Вперед →
-</button>
-        </div>
+    <div className="reader-nav-container">
+      <div className="reader-nav-buttons">
+        <button 
+          onClick={() => loadPage(currentPage - 1)} 
+          disabled={currentPage === 0}
+          className="reader-nav-button"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button 
+          onClick={() => loadPage(currentPage + 1)} 
+          disabled={currentPage === totalPages - 1}
+          className="reader-nav-button"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
+      
+      <div className="reader-page-info">
+        Страница {currentPage + 1} из {totalPages}
+      </div>
+      
       <div 
         ref={containerRef} 
-        className="flex-1 overflow-y-auto p-6" 
+        className="reader-content"
         onMouseUp={handleTextSelection}
       >
         <div dangerouslySetInnerHTML={{ __html: content }} />
