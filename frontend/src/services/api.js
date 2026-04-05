@@ -624,5 +624,9 @@ export const getLastOpenedBook = async () => {
     }
 };
 
+export const leaveSession = async (sessionId) => {
+    const response = await api.post(`/session/${sessionId}/leave`);
+    return response.data;
+};
 
 export default api;

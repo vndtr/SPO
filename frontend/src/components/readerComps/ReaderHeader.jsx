@@ -11,7 +11,8 @@ export default function ReaderHeader({
   sessionId = null,
   currentUserId = null,
   onShowParticipants = null,
-  globalSettings = { font_size: 14, background_color: 'light' }
+  globalSettings = { font_size: 14, background_color: 'light' },
+  onLeaveSession = null
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const menuRef = useRef(null);
@@ -147,11 +148,20 @@ const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
                       >
                         Настройки
                       </li>
-                      <Link to="/" onClick={() => setModalOpen(false)}>
-                        <li className="cursor-pointer hover:text-accent-1 px-2 py-2 hover:bg-beige-1 rounded text-lg">
-                          Выйти
-                        </li>
-                      </Link>
+                      <Link 
+    to="#" 
+    onClick={(e) => {
+        e.preventDefault();
+        setModalOpen(false);
+        if (isSession && onLeaveSession) {
+            onLeaveSession();
+        }
+    }}
+>
+    <li className="cursor-pointer hover:text-accent-1 px-2 py-2 hover:bg-beige-1 rounded text-lg">
+        Выйти из сессии
+    </li>
+</Link>
                     </ul>
                   </div>
                 </div>

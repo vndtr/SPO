@@ -17,7 +17,17 @@ export default function SessionsView() {
 
   useEffect(() => {
     loadSessions();
-  }, []);
+
+  const handleSessionsUpdate = () => {
+        loadSessions();
+    };
+    
+    window.addEventListener('sessionsUpdated', handleSessionsUpdate);
+    
+    return () => {
+        window.removeEventListener('sessionsUpdated', handleSessionsUpdate);
+    };
+}, []);
 
   const sortSessions = (sessionsList, order) => {
     return [...sessionsList].sort((a, b) => {

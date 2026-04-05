@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, File, Request, Form, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 import crud
 import schemas, models
 from deps import get_session
@@ -179,3 +179,77 @@ async def get_session_progress(
         return {"last_page": 0}
     
     return {"last_page": participant.last_page or 0}
+
+@session_router.post('/{session_id}/leave')
+async def leave_session(
+    session_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    user = request.state.user
+    print(f"User {user.id} trying to leave session {session_id}")
+    
+    # Проверяем, является ли пользователь участником сессии
+    stmt = select(models.Session_Participant).where(
+        models.Session_Participant.user_id == user.id,
+        models.Session_Participant.session_id == session_id
+    )
+    participant = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not participant:
+        raise HTTPException(status_code=404, detail="You are not a participant of this session")
+    
+    # Проверяем, является ли пользователь создателем сессии
+    stmt_session = select(models.Session).where(models.Session.id == session_id)
+    session = (await db.execute(stmt_session)).scalar_one_or_none()
+    
+    is_creator = (session and session.user_id == user.id)
+    print(f"Is creator: {is_creator}")
+    
+    if is_creator:
+        # Создатель - удаляем всю сессию (каскадно удалится всё)
+        await db.delete(session)
+        await db.commit()
+        
+        # Отправляем WebSocket уведомление
+        await manager.broadcast(
+            session_id=session_id,
+            message={
+                "type": "session_deleted",
+                "session_id": session_id,
+                "action": "redirect"
+            }
+        )
+        
+        return {"message": "Session deleted", "is_creator": True}
+    else:
+        # Обычный участник - удаляем сначала всё, что связано с ним
+        
+        # 1. Удаляем ответы участника
+        stmt_answers = delete(models.Answer).where(models.Answer.participant_id == participant.id)
+        await db.execute(stmt_answers)
+        
+        # 2. Удаляем цитаты участника (ВАЖНО: ДО удаления заметок, чтобы избежать FK ошибок)
+        stmt_quotes = delete(models.Session_Quote).where(models.Session_Quote.participant_id == participant.id)
+        await db.execute(stmt_quotes)
+        
+        # 3. Удаляем заметки участника
+        stmt_notes = delete(models.Session_Note).where(models.Session_Note.participant_id == participant.id)
+        await db.execute(stmt_notes)
+        
+        # 4. Удаляем самого участника
+        await db.delete(participant)
+        await db.commit()
+        
+        # Отправляем WebSocket уведомление
+        await manager.broadcast(
+            session_id=session_id,
+            message={
+                "type": "participant_left",
+                "user_id": user.id,
+                "user_name": user.name,
+                "action": "reload"
+            }
+        )
+        
+        return {"message": "You left the session", "is_creator": False}

@@ -12,7 +12,7 @@ class Session_Quote(Base):
     selected_text:Mapped[str] = mapped_column(Text, nullable=False)
     color:Mapped[str] = mapped_column(String(50), nullable=False)
     session_id: Mapped[bool] = mapped_column (ForeignKey('session.id'), nullable=False, index=True)
-    participant_id:Mapped[int] = mapped_column(ForeignKey('session_participant.id'), nullable=False, index=True)
+    participant_id: Mapped[int] = mapped_column(ForeignKey('session_participant.id', ondelete="CASCADE"), nullable=False, index=True)
     start_index:Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     end_index:Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at:Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))

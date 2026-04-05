@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ReaderHeader from '../components/readerComps/ReaderHeader.jsx';
 import SessionReaderAside from '../components/readerComps/SessionReaderAside.jsx';
 import SelectionMenu from '../components/readerComps/SelectionMenu.jsx';
@@ -21,7 +22,8 @@ import {
   joinSessionByLink,
   getSessionAnnotations,
    getUserSettings,
-    updateUserSettings 
+    updateUserSettings,
+    leaveSession
 } from '../services/api';
 
 export default function SessionReaderView() {
@@ -48,6 +50,7 @@ const [showSettingsModal, setShowSettingsModal] = useState(false);
 const [highlightedNoteId, setHighlightedNoteId] = useState(null);
   const menuRef = useRef(null);
   const wsRef = useRef(null);
+  const navigate = useNavigate();
 
 
   const refreshAnnotations = async () => {
@@ -297,6 +300,38 @@ const scrollToNote = (noteId) => {
   const handleSettingsApplied = (newSettings) => {
     setReaderSettings(newSettings);
 };
+// Функция выхода из сессии
+const handleLeaveSession = async () => {
+    const isCreator = userRole === 'teacher' && session?.user_id === currentUser?.user_id;
+    const confirmMessage = isCreator 
+        ? "Вы создатель этой сессии. При выходе сессия будет полностью удалена для всех участников. Вы уверены?"
+        : "Вы уверены, что хотите покинуть эту сессию? Все ваши заметки и ответы будут удалены.";
+    
+    if (!window.confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        const result = await leaveSession(session.id);
+        
+        if (result.is_creator) {
+        alert("Сессия успешно удалена");
+        // Отправляем событие для обновления списка сессий у всех участников
+        window.dispatchEvent(new CustomEvent('sessionsUpdated'));
+    } else {
+        alert("Вы покинули сессию");
+        window.dispatchEvent(new CustomEvent('sessionsUpdated'));
+    }
+    
+    navigate('/sessions');
+        
+        // Перенаправляем на главную страницу или страницу сессий
+        navigate('/sessions');
+    } catch (error) {
+        console.error('Error leaving session:', error);
+        alert("Ошибка при выходе из сессии");
+    }
+};
 
   const openEditModal = (id, type, currentColor, currentComment, selectedText, currentVisibility, startIndex, endIndex) => {
   if (type !== 'note') {
@@ -501,11 +536,21 @@ useEffect(() => {
         console.log('WebSocket message received:', data);
         
         if (data.type === 'role_changed') {
-            // Если роль изменилась у текущего пользователя
             if (data.user_id === currentUser?.user_id) {
-                // Обновляем роль текущего пользователя
                 setUserRole(data.new_role_id === 2 ? 'teacher' : 'student');
             }
+            if (window.refreshParticipants) {
+                window.refreshParticipants();
+            }
+        }
+
+         if (data.type === 'session_deleted') {
+            alert("Создатель сессии удалил эту сессию");
+            navigate('/sessions');
+            window.dispatchEvent(new CustomEvent('sessionsUpdated'));
+        }
+        
+        if (data.type === 'participant_left') {
             // Обновляем список участников
             if (window.refreshParticipants) {
                 window.refreshParticipants();
@@ -570,6 +615,7 @@ useEffect(() => {
     onShowParticipants={handleShowParticipants}
     globalSettings={readerSettings} 
     onSettingsClick={() => setShowSettingsModal(true)} 
+     onLeaveSession={handleLeaveSession}
       />
       
       <div className='flex flex-1 min-h-0'>
