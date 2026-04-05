@@ -14,14 +14,15 @@ async def add_user(user:schemas.UserCreate,db:AsyncSession = Depends(get_session
 
 
 @user_router.patch('/', response_model=schemas.UserUpdate)
-async def add_user(
+async def update_user(
     request:Request,
     user:schemas.UserUpdate,db:AsyncSession = Depends(get_session)):
     return await crud.update_user(request.state.user.id, user, db)
 
 
 @user_router.get('/profile', response_model=schemas.UserRead)
-async def add_user(request:Request,db:AsyncSession = Depends(get_session)):
+async def get_profile(request:Request,db:AsyncSession = Depends(get_session)):
     q = select(models.User).where(models.User.id == request.state.user.id)
     db_user = (await db.execute(q)).scalar_one_or_none()
+    print(f"User profile: id={db_user.id}, name={db_user.name}, email={db_user.email}")
     return db_user

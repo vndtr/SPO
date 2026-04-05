@@ -34,6 +34,7 @@ export default function ProfileView() {
         return;
       }
       const profile = await getUserProfile();
+      console.log('Loaded profile:', profile);
       setUserData(profile);
       setFormData({
         name: profile.name || '',
@@ -59,20 +60,45 @@ export default function ProfileView() {
     setIsEditing(true);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await updateUserProfile(formData);
-      setUserData(formData);
-      setIsEditing(false);
-      alert('Профиль успешно обновлен');
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      alert('Ошибка при сохранении профиля');
-    } finally {
-      setSaving(false);
+const handleSave = async () => {
+  setSaving(true);
+  try {
+    const updateData = {};
+    
+    if (formData.name !== userData.name && formData.name.trim()) {
+      updateData.name = formData.name;
     }
-  };
+    if (formData.last_name !== userData.last_name) {
+      updateData.last_name = formData.last_name;
+    }
+    if (formData.email !== userData.email && formData.email.trim()) {
+      updateData.email = formData.email;
+    }
+    
+    console.log('Update data being sent:', JSON.stringify(updateData, null, 2));
+    
+    if (Object.keys(updateData).length === 0) {
+      setIsEditing(false);
+      return;
+    }
+    
+    const response = await updateUserProfile(updateData);
+    console.log('Update response:', response);
+    
+    setUserData(formData);
+    setIsEditing(false);
+    alert('Профиль успешно обновлен');
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    if (error.response) {
+      console.error('Error response status:', error.response.status);
+      console.error('Error response data:', error.response.data);
+    }
+    alert('Ошибка при сохранении профиля');
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleCancel = () => {
     setFormData({

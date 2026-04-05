@@ -23,6 +23,7 @@ class UserUpdate(BaseModel):
 
 class UserRead(UserBase):
     id: int
+    email: str
     background_color:str
     font_size:int
     model_config = ConfigDict(from_attributes=True)

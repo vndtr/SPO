@@ -1,4 +1,4 @@
-// frontend/src/services/api.js
+
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000';
@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ==================== АВТОРИЗАЦИЯ ====================
+//  АВТОРИЗАЦИЯ 
 
 export const login = async (username, password) => {
   const formData = new URLSearchParams();
@@ -60,7 +60,7 @@ export const logout = () => {
   localStorage.removeItem('access_token');
 };
 
-// ==================== КНИГИ ====================
+//КНИГИ 
 
 export const getBooks = async () => {
   const response = await api.get('/book/');
@@ -87,7 +87,7 @@ export const getBookPage = async (bookId, page) => {
       throw new Error('Book not found or no content path');
     }
     
-    // Получаем общее количество страниц (кэшируем)
+    // Получаем общее количество страниц 
     let total_pages = 1;
     const cachedTotal = localStorage.getItem(`book_${bookId}_total_pages`);
     if (cachedTotal) {
@@ -153,7 +153,7 @@ export const deleteBook = async (bookId) => {
   return response.data;
 };
 
-// ==================== SOLO SESSION (личное чтение) ====================
+// личное чтение
 
 export const getSoloSession = async (bookId) => {
   try {
@@ -223,14 +223,11 @@ export const updateSoloNote = async (data) => {
   return response.data;
 };
 
-// ==================== СЕССИИ (совместное чтение) ====================
+//СЕССИИ 
 
 export const getSessions = async () => {
-  // GET /session/ — возвращает список Session_Participant с подгруженными session
   const response = await api.get('/session/');
   const participants = response.data;
-  
-  // Извлекаем session из каждого participant
   return participants.map(p => ({
     id: p.session.id,
     name: p.session.name,
@@ -243,7 +240,6 @@ export const getSessions = async () => {
 };
 
 export const createSession = async (data) => {
-  // POST /session/ — создание сессии
   const response = await api.post('/session/', {
     name: data.name,
     book_id: data.book_id
@@ -257,7 +253,6 @@ export const getSessionById = async (sessionId) => {
 };
 
 export const getSessionInfo = async (sessionId) => {
-  // Вспомогательная функция — получаем сессию через список сессий
   const sessions = await getSessions();
   return sessions.find(s => s.id === parseInt(sessionId));
 };
@@ -375,7 +370,8 @@ export const deleteAnswer = async (answerId, sessionId, noteId) => {
 
 
 
-// ==================== НАСТРОЙКИ ====================
+// НАСТРОЙКИ
+
 // Получение настроек текущего пользователя
 export const getUserSettings = async () => {
     try {
@@ -393,7 +389,6 @@ export const getUserSettings = async () => {
 
 // Обновление настроек пользователя
 export const updateUserSettings = async (settings) => {
-    // Сохраняем в localStorage сразу для быстрого доступа
     localStorage.setItem('reader_settings', JSON.stringify(settings));
     
     const response = await api.patch('/user/', {
@@ -409,7 +404,7 @@ export const updateParticipantRole = async (sessionId, userId, roleId) => {
     });
     return response.data;
 };
-// ==================== ПОЛЬЗОВАТЕЛЬ ====================
+//  ПОЛЬЗОВАТЕЛЬ 
 
 export const getUserProfile = async () => {
   const response = await api.get('/user/profile');
@@ -424,12 +419,12 @@ export const getUserProfile = async () => {
 };
 
 export const updateUserProfile = async (userData) => {
+  console.log('updateUserProfile received:', userData);
   const response = await api.patch('/user/', userData);
   return response.data;
 };
 
-// ==================== ПОИСК (временное решение) ====================
-// frontend/src/services/api.js
+// ПОИСК
 
 export const searchBooks = async (query) => {
   console.log('searchBooks called with query:', query);
@@ -473,8 +468,6 @@ export const getRecentAnswers = async (limit = 10) => {
 };
 
 // Получение последней открытой книги (личное чтение)
-
-
 export const getLastOpenedBook = async () => {
     try {
         const response = await api.get('/solo_session/last');
@@ -503,7 +496,6 @@ export const getLastOpenedBook = async () => {
 export const getRecentSessions = async (limit = 3) => {
     try {
         const sessions = await getSessions();
-        // Сортируем по ID (чем больше ID, тем новее) или по дате создания
         const sorted = sessions.sort((a, b) => b.id - a.id);
         const recent = sorted.slice(0, limit);
         
@@ -518,8 +510,8 @@ export const getRecentSessions = async (limit = 3) => {
                     book_title: book.title,
                     book_author: book.author,
                     book_cover: book.cover_img,
-                    members: 0, // TODO: посчитать участников
-                    notes: 0,   // TODO: посчитать заметки
+                    members: 0, 
+                    notes: 0,   
                     link: session.link
                 });
             } catch (err) {
