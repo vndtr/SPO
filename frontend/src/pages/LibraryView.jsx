@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/mainComps/Header.jsx';
 import NavAside from '../components/mainComps/NavAside.jsx';
 import LibraryBook from '../components/libraryComps/LibraryBook.jsx';
 import UploadBookModal from '../components/libraryComps/UploadBookModal.jsx';
-import { getBooks, uploadBook, deleteBook, getCurrentUser, getBookProgress } from '../services/api';
+import CreateSessionModal from '../components/sessionsComps/CreateSessionModal.jsx';
+import { getBooks, uploadBook, deleteBook, getCurrentUser, getBookProgress, createSession } from '../services/api';
 import '../styles/pages/library.css';
 
 export default function LibraryView() {
   const [books, setBooks] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
+  const [selectedBookForSession, setSelectedBookForSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('asc');
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadCurrentUser();
@@ -134,6 +139,22 @@ export default function LibraryView() {
       setLoading(false);
     }
   };
+  const handleCreateSessionClick = (book) => {
+    setSelectedBookForSession(book);
+    setShowCreateSessionModal(true);
+  };
+
+  const handleCreateSession = async (sessionData) => {
+    try {
+      const newSession = await createSession(sessionData);
+      setShowCreateSessionModal(false);
+      setSelectedBookForSession(null);
+      navigate(`/session-reader?sessionId=${newSession.id}&name=${encodeURIComponent(newSession.name)}`);
+    } catch (error) {
+      console.error('Error creating session:', error);
+      alert('Ошибка при создании сессии');
+    }
+  };
 
   if (authLoading) {
     return (
@@ -234,6 +255,7 @@ export default function LibraryView() {
                 coverColor={book.coverColor}
                 src={book.coverImage}
                 onDelete={handleDeleteBook}
+                onCreateSession={() => handleCreateSessionClick(book)}
               />
             ))}
           </div>
@@ -244,6 +266,16 @@ export default function LibraryView() {
         <UploadBookModal
           onClose={() => setShowUploadModal(false)}
           onUpload={handleUploadBook}
+        />
+      )}
+      {showCreateSessionModal && selectedBookForSession && (
+        <CreateSessionModal
+          onClose={() => {
+            setShowCreateSessionModal(false);
+            setSelectedBookForSession(null);
+          }}
+          onCreate={handleCreateSession}
+          defaultBookId={selectedBookForSession.id}
         />
       )}
     </>

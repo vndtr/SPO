@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { getBooks } from '../../services/api';
 import '../../styles/components/modal.css';
 
-export default function CreateSessionModal({ onClose, onCreate }) {
+export default function CreateSessionModal({ onClose, onCreate, defaultBookId }) {
   const [books, setBooks] = useState([]);
-  const [selectedBookId, setSelectedBookId] = useState('');
+  const [selectedBookId, setSelectedBookId] = useState(defaultBookId || '');
   const [sessionName, setSessionName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

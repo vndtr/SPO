@@ -10,7 +10,8 @@ export default function LibraryBook({
   title, 
   author, 
   progress,
-  onDelete 
+  onDelete,
+  onCreateSession  
 }) {
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -46,11 +47,12 @@ export default function LibraryBook({
               Открыть
             </button>
           </Link>
-          <Link to={`/session-create?bookId=${id}`}>
-            <button className="book-button book-button-session">
-              Сессия
-            </button>
-          </Link>
+          <button 
+            onClick={onCreateSession}
+            className="book-button book-button-session"
+          >
+            Сессия
+          </button>
         </div>
 
         <button 
