@@ -138,9 +138,9 @@ export default function SessionReaderNote({
       <div className="reader-note-actions">
         <div className="flex gap-1">
           {visibility === 'public' && !isReplyOpen && (
-            <button onClick={(e) => { e.stopPropagation(); onReplyClick(); }} className="reader-note-reply-btn">
-              Ответить
-            </button>
+              <button onClick={(e) => { e.stopPropagation(); onReplyClick(); }} className="reader-note-reply-btn">
+                  Ответить
+              </button>
           )}
           
           {!isReplyOpen && (

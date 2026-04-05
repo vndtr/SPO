@@ -221,6 +221,11 @@ export default function SessionReaderView() {
       setPendingSelection(null);
       window.getSelection()?.removeAllRanges();
       window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
+      setTimeout(() => {
+      if (window.forceApplyStyles) {
+        window.forceApplyStyles();
+      }
+      }, 50);
       
     } catch (error) {
       console.error('Error creating quote:', error);
@@ -267,6 +272,11 @@ export default function SessionReaderView() {
       setPendingSelection(null);
       window.getSelection()?.removeAllRanges();
       window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
+      setTimeout(() => {
+      if (window.forceApplyStyles) {
+        window.forceApplyStyles();
+      }
+      }, 50);
       
     } catch (error) {
       console.error('Error creating note:', error);
@@ -392,9 +402,12 @@ export default function SessionReaderView() {
         window.updateBookReaderAnnotations(allAnnotations);
       }
       
-      setTimeout(() => {
+          setTimeout(() => {
         if (window.refreshAllHighlights) {
           window.refreshAllHighlights();
+        }
+        if (window.forceApplyStyles) {
+          window.forceApplyStyles();
         }
       }, 100);
       
@@ -431,11 +444,14 @@ export default function SessionReaderView() {
     setIsSidebarOpen(!isSidebarOpen);
     
     setTimeout(() => {
-      if (window.refreshAllHighlights) {
-        window.refreshAllHighlights();
-      }
-    }, 100);
-  };
+    if (window.refreshAllHighlights) {
+      window.refreshAllHighlights();
+    }
+    if (window.forceApplyStyles) {
+      window.forceApplyStyles();
+    }
+  }, 100);
+};
 
   const refreshParticipants = async () => {
     if (!session?.id) return;

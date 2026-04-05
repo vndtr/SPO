@@ -17,6 +17,7 @@ export default function ParticipantsModal({ sessionId, currentUserId, onClose })
             setLoading(true);
             const data = await getSessionParticipants(sessionId);
             setParticipants(data);
+            console.log('Participants loaded:', data);
         } catch (error) {
             console.error('Error loading participants:', error);
         } finally {
@@ -42,14 +43,6 @@ export default function ParticipantsModal({ sessionId, currentUserId, onClose })
         e.stopPropagation();
     };
 
-    const sessionCreator = participants.find(p => p.user_id === participants[0]?.user_id);
-    const isCreator = (participant) => participant.user_id === sessionCreator?.user_id;
-    const canChangeRole = (participant) => {
-        if (participant.user_id === currentUserId) return false;
-        if (isCreator(participant)) return false;
-        return true;
-    };
-
     const handleClose = () => {
         if (window.preserveHighlights) {
             window.preserveHighlights();
@@ -65,6 +58,32 @@ export default function ParticipantsModal({ sessionId, currentUserId, onClose })
         }, 50);
     };
 
+    if (loading) {
+        return (
+            <div className="modal-overlay" onClick={handleClose}>
+                <div className="modal-backdrop"></div>
+                <div className="modal-container" onClick={handleModalClick}>
+                    <div className="modal-header">
+                        <h3 className="modal-title">Участники сессии</h3>
+                        <button onClick={handleClose} className="modal-close">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="participants-loading">Загрузка...</div>
+                </div>
+            </div>
+        );
+    }
+    const sessionCreator = participants.find(p => p.role_id === 2 && p.user_id === p.user?.id);
+    const isCreator = (participant) => participant.user_id === sessionCreator?.user_id;
+    const canChangeRole = (participant) => {
+        if (participant.user_id === currentUserId) return false;
+        if (isCreator(participant)) return false;
+        return true;
+    };
+
     return (
         <div className="modal-overlay" onClick={handleClose}>
             <div className="modal-backdrop"></div>
@@ -78,19 +97,21 @@ export default function ParticipantsModal({ sessionId, currentUserId, onClose })
                     </button>
                 </div>
                 
-                {loading ? (
-                    <div className="participants-loading">Загрузка...</div>
-                ) : (
-                    <div className="participants-list">
-                        {participants.map(participant => (
+                <div className="participants-list">
+                    {participants.map(participant => {
+                        const userName = participant.user?.name || participant.name || 'Пользователь';
+                        const userLastName = participant.user?.last_name || participant.last_name || '';
+                        const fullName = `${userName} ${userLastName}`.trim();
+                        
+                        return (
                             <div key={participant.id} className="participant-item">
                                 <div className="participant-avatar">
-                                    {participant.user?.name?.[0] || '?'}
+                                    {userName[0]?.toUpperCase() || '?'}
                                 </div>
                                 
                                 <div className="participant-info">
                                     <p className="participant-name">
-                                        {participant.user?.name} {participant.user?.last_name}
+                                        {fullName || userName}
                                         {participant.user_id === currentUserId && ' (Вы)'}
                                     </p>
                                     <p className="participant-role">
@@ -116,9 +137,9 @@ export default function ParticipantsModal({ sessionId, currentUserId, onClose })
                                     </span>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                )}
+                        );
+                    })}
+                </div>
 
                 <div className="participants-modal-footer">
                     <button onClick={handleClose} className="participants-modal-button">

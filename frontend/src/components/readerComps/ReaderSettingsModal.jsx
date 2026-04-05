@@ -50,12 +50,15 @@ export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
             }
             
             setTimeout(() => {
-                if (window.restoreHighlights) {
-                    window.restoreHighlights();
-                }
-                if (window.refreshAllHighlights) {
-                    window.refreshAllHighlights();
-                }
+              if (window.restoreHighlights) {
+                window.restoreHighlights();
+              }
+              if (window.refreshAllHighlights) {
+                window.refreshAllHighlights();
+              }
+              if (window.forceApplyStyles) {
+                window.forceApplyStyles();
+              }
             }, 100);
             
             onClose();
@@ -107,11 +110,14 @@ export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
             if (window.refreshAllHighlights) {
                 window.refreshAllHighlights();
             }
+            if (window.forceApplyStyles) {
+              window.forceApplyStyles();
+            }
         }, 50);
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay" onClick={handleClose}>
             <div className="modal-backdrop"></div>
             <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">

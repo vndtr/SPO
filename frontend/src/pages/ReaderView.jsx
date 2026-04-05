@@ -157,6 +157,11 @@ export default function ReaderView() {
       setPendingSelection(null);
       window.getSelection()?.removeAllRanges();
       window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+      setTimeout(() => {
+      if (window.forceApplyStyles) {
+        window.forceApplyStyles();
+      }
+      }, 50);
       
     } catch (error) {
       console.error('Error creating quote:', error);
@@ -200,6 +205,11 @@ export default function ReaderView() {
       setPendingSelection(null);
       window.getSelection()?.removeAllRanges();
       window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+      setTimeout(() => {
+      if (window.forceApplyStyles) {
+        window.forceApplyStyles();
+      }
+      }, 50);
       
     } catch (error) {
       console.error('Error creating note:', error);
@@ -230,6 +240,15 @@ export default function ReaderView() {
       }
       
       window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+      setTimeout(() => {
+      if (window.refreshAllHighlights) {
+        window.refreshAllHighlights();
+      }
+      if (window.forceApplyStyles) {
+        window.forceApplyStyles();
+      }
+      }, 100);
+
     } catch (error) {
       console.error('Error deleting annotation:', error);
       alert('Ошибка при удалении');
@@ -247,11 +266,14 @@ export default function ReaderView() {
     setIsSidebarOpen(!isSidebarOpen);
     
     setTimeout(() => {
-      if (window.refreshAllHighlights) {
-        window.refreshAllHighlights();
-      }
-    }, 100);
-  };
+    if (window.refreshAllHighlights) {
+      window.refreshAllHighlights();
+    }
+    if (window.forceApplyStyles) {
+      window.forceApplyStyles();
+    }
+  }, 100);
+};
 
   useEffect(() => {
     const handleClickOutside = (e) => {

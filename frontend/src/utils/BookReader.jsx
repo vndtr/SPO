@@ -23,6 +23,7 @@ export default function BookReader({
   const isInitializedRef = useRef(false);
   const containerRef = useRef(null);
   const initialLoadRef = useRef(false);
+  const isSelectingRef = useRef(false);
 
   const getGlobalIndex = (node, offset) => {
     if (!containerRef.current) return 0;
@@ -121,6 +122,8 @@ export default function BookReader({
 
   const applyAllHighlights = () => {
     if (!containerRef.current) return;
+
+    const currentFontSize = containerRef.current.style.fontSize;
     
     annotations.forEach(annotation => {
       if (annotation.start_index === undefined || annotation.end_index === undefined) return;
@@ -158,7 +161,14 @@ export default function BookReader({
         console.error('Failed to apply highlight:', e);
       }
     });
+    if (currentFontSize && settings) {
+      setTimeout(() => {
+        if (window.forceApplyStyles) {
+          window.forceApplyStyles();
+        }
+      }, 10);
   };
+};
 
   const loadAnnotationsForPage = async () => {
     if (soloSessionId) {
@@ -284,12 +294,13 @@ export default function BookReader({
   }, [soloSessionId, sessionId, content, loading, totalPages, currentPage]);
 
   useEffect(() => {
-    if (content && !loading && annotations.length > 0) {
-      applyAllHighlights();
-    }
-  }, [annotations, content, loading]);
+  if (content && !loading && annotations.length > 0 && !isSelectingRef.current) {
+    applyAllHighlights();
+  }
+}, [annotations, content, loading]);
 
   const handleTextSelection = () => {
+    isSelectingRef.current = true;
     const selection = window.getSelection();
     const text = selection.toString().trim();
     
@@ -311,6 +322,9 @@ export default function BookReader({
         }
       });
     }
+    setTimeout(() => {
+    isSelectingRef.current = false;
+    }, 100);
   };
 
   // Глобальные функции для работы с подсветками
@@ -437,6 +451,31 @@ export default function BookReader({
       });
     };
 
+  window.forceApplyStyles = () => {
+  if (isSelectingRef.current) return;
+  if (!containerRef.current || !settings) return;
+  
+  const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
+  const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
+  const fontSize = fontSizeMap[fontSizeValue] || '14px';
+  
+  const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
+  const textColor = textColors[settings.background_color] || '#374151';
+  
+  const allElements = containerRef.current.querySelectorAll('*');
+  allElements.forEach(el => {
+    el.style.fontSize = fontSize;
+    el.style.color = textColor;
+  });
+  
+  const paragraphs = containerRef.current.querySelectorAll('p');
+  paragraphs.forEach(p => {
+    p.style.fontSize = fontSize;
+    p.style.color = textColor;
+    p.style.lineHeight = '1.6';
+  });
+  };
+
     window.updateBookReaderAnnotations = (newAnnotations) => {
       setAnnotations(newAnnotations);
       setTimeout(() => {
@@ -538,6 +577,7 @@ export default function BookReader({
       delete window.updateBookReaderAnnotations;
       delete window.preserveHighlights;
       delete window.restoreHighlights;
+      delete window.forceApplyStyles;
       observer.disconnect();
     };
   }, [totalPages, currentPage, annotations, content, loading, pageStartIndex, fullText, currentUser, onAnnotationClick, soloSessionId, sessionId]);
@@ -612,7 +652,7 @@ export default function BookReader({
     }
   }, [settings]);
 
-  if (loading) return <div className="reader-loading-text">Загрузка...</div>;
+    if (loading) return <div className="reader-loading-text">Загрузка...</div>;
 
   return (
     <div className="reader-nav-container">

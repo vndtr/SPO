@@ -14,6 +14,25 @@ export default function SessionReaderModal({
     const [comment, setComment] = useState(initialComment);
     const [color, setColor] = useState(initialColor);
     const [visibility, setVisibility] = useState(initialVisibility);
+    
+    const handleClose = () => {
+    if (window.preserveHighlights) {
+        window.preserveHighlights();
+    }
+    onClose();
+    setTimeout(() => {
+        if (window.restoreHighlights) {
+            window.restoreHighlights();
+        }
+        if (window.refreshAllHighlights) {
+            window.refreshAllHighlights();
+        }
+        if (window.forceApplyStyles) {
+            window.forceApplyStyles();
+        }
+    }, 50);
+      };
+
 
     useEffect(() => {
         setComment(initialComment);
@@ -24,7 +43,7 @@ export default function SessionReaderModal({
     const handleSave = () => {
         if (!comment.trim()) return;
         onAddNote(color, comment, visibility);
-        onClose();
+        handleClose();
     };
     
     return (
@@ -33,7 +52,7 @@ export default function SessionReaderModal({
             <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3 className="modal-title">{isEdit ? 'Редактирование заметки' : 'Новая заметка'}</h3>
-                    <button onClick={onClose} className="modal-close">
+                    <button onClick={handleClose} className="modal-close">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M18 6L6 18M6 6l12 12"/>
                         </svg>
@@ -85,7 +104,7 @@ export default function SessionReaderModal({
                     <button onClick={handleSave} className="form-button-submit">
                         {isEdit ? 'Сохранить изменения' : 'Сохранить заметку'}
                     </button>
-                    <button onClick={onClose} className="form-button-cancel">
+                    <button onClick={handleClose} className="form-button-cancel">
                         Отмена
                     </button>
                 </div>

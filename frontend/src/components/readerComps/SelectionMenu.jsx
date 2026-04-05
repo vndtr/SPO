@@ -4,10 +4,20 @@ import '../../styles/components/reader.css';
 export default function SelectionMenu({ position, onClose, onQuote, onNoteClick, selectedText }) {
   const menuRef = useRef(null);
 
+  const handleClose = () => {
+    // Восстанавливаем стили перед закрытием
+    if (window.forceApplyStyles) {
+      setTimeout(() => {
+        window.forceApplyStyles();
+      }, 10);
+    }
+    onClose();
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
-        onClose();
+        handleClose();
       }
     };
     
@@ -33,19 +43,19 @@ export default function SelectionMenu({ position, onClose, onQuote, onNoteClick,
           <span className="selection-menu-color-label">Цитата:</span>
           <div className="selection-menu-colors">
             <button 
-              onClick={() => { onQuote('yellow', selectedText); onClose(); }}
+              onClick={() => { onQuote('yellow', selectedText); handleClose(); }}
               className="selection-menu-color-btn selection-menu-color-btn-yellow"
             />
             <button 
-              onClick={() => { onQuote('green', selectedText); onClose(); }}
+              onClick={() => { onQuote('green', selectedText); handleClose(); }}
               className="selection-menu-color-btn selection-menu-color-btn-green"
             />
             <button 
-              onClick={() => { onQuote('blue', selectedText); onClose(); }}
+              onClick={() => { onQuote('blue', selectedText); handleClose(); }}
               className="selection-menu-color-btn selection-menu-color-btn-blue"
             />
             <button 
-              onClick={() => { onQuote('pink', selectedText); onClose(); }}
+              onClick={() => { onQuote('pink', selectedText); handleClose(); }}
               className="selection-menu-color-btn selection-menu-color-btn-pink"
             />
           </div>
@@ -54,7 +64,7 @@ export default function SelectionMenu({ position, onClose, onQuote, onNoteClick,
         <div className="selection-menu-divider"></div>
 
         <button
-          onClick={() => { onNoteClick(); }}
+          onClick={() => { onNoteClick(); handleClose(); }}
           className="selection-menu-note-btn"
         >
           Создать заметку

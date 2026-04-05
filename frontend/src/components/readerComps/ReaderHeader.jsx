@@ -154,7 +154,19 @@ export default function ReaderHeader({
                       >
                         Настройки
                       </li>
-                      
+                      {isSession && (
+                      <li 
+                        className="reader-header-menu-item"
+                        onClick={() => {
+                          setModalOpen(false);
+                          if (onLeaveSession) {
+                            onLeaveSession();
+                          }
+                        }}
+                      >
+                        Выйти из сессии
+                      </li>
+                      )}
                     </ul>
                   </div>
                 </div>

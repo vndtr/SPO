@@ -24,8 +24,22 @@ async def get_session_participants(
         request:Request,
         db:AsyncSession = Depends(get_session)):
     participants = await crud.get_participants_by_session_id(session_id, db)
-
-    return participants
+    result = []
+    for p in participants:
+        user = await db.get(models.User, p.user_id)
+        result.append({
+            "id": p.id,
+            "session_id": p.session_id,
+            "user_id": p.user_id,
+            "role_id": p.role_id,
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "last_name": user.last_name,
+                "email": user.email
+            } if user else None
+        })
+    return result
 
 @session_router.get('/')
 async def get_sessions(
