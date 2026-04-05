@@ -15,6 +15,7 @@ export default function MainView() {
     const wsRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
     const isMounted = useRef(true);
+    
 
     useEffect(() => {
         isMounted.current = true;
@@ -32,6 +33,76 @@ export default function MainView() {
             }
         };
     }, []);
+
+    // frontend/src/pages/MainView.jsx
+
+useEffect(() => {
+  loadData();
+  setupWebSocket();
+  
+  // Слушаем обновления прогресса
+  const handleProgressUpdate = (event) => {
+    const { bookId, page } = event.detail;
+    // Обновляем прогресс последней открытой книги
+    if (lastBook && lastBook.id === bookId) {
+      // Получаем общее количество страниц
+      const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
+      if (totalPages && parseInt(totalPages) > 0) {
+        const progress = Math.round((page / parseInt(totalPages)) * 100);
+        setLastBook(prev => ({ ...prev, progress: Math.min(progress, 100) }));
+      }
+    }
+  };
+  
+  window.addEventListener('progressUpdated', handleProgressUpdate);
+  
+  return () => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    window.removeEventListener('progressUpdated', handleProgressUpdate);
+  };
+}, []);
+
+// frontend/src/pages/MainView.jsx
+
+const setupWebSocket = () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) return;
+  
+  try {
+    const ws = new WebSocket(`ws://localhost:5000/ws/notifications?token=${encodeURIComponent(token)}`);
+    
+    ws.onopen = () => {
+      console.log('Notification WebSocket connected');
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket message:', data);
+        if (data.type === 'new_answer') {
+          loadNotifications();
+        }
+      } catch (e) {
+        console.error('Error parsing message:', e);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setTimeout(setupWebSocket, 5000);
+    };
+    
+    wsRef.current = ws;
+  } catch (err) {
+    console.error('Failed to setup WebSocket:', err);
+  }
+};
 
     const connectWebSocket = () => {
         const token = localStorage.getItem('access_token');

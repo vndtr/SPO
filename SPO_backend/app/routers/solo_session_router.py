@@ -16,8 +16,6 @@ async def create_solo_session(
     db:AsyncSession = Depends(get_session)):
     return await crud.create_solo_session(request.state.user,book_id, db)
 
-
-
 @solo_session_router.get('/')
 async def get_solo_session(
         request:Request,
@@ -46,3 +44,46 @@ async def get_last_solo_session(
         "book_id": session.book_id,
         "last_position": session.last_position or 0
     }
+
+@solo_session_router.post('/{solo_session_id}/progress')
+async def update_solo_progress(
+    solo_session_id: int,
+    request: Request,
+    progress_data: dict,
+    db: AsyncSession = Depends(get_session)
+):
+    user = request.state.user
+    
+    stmt = select(models.Solo_Session).where(
+        models.Solo_Session.id == solo_session_id,
+        models.Solo_Session.user_id == user.id
+    )
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    session.last_position = progress_data.get('last_page', 0)
+    
+    await db.commit()
+    
+    return {"message": "Progress updated"}
+
+@solo_session_router.get('/{solo_session_id}/progress')
+async def get_solo_progress(
+    solo_session_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    user = request.state.user
+    
+    stmt = select(models.Solo_Session).where(
+        models.Solo_Session.id == solo_session_id,
+        models.Solo_Session.user_id == user.id
+    )
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not session:
+        return {"last_page": 0}
+    
+    return {"last_page": session.last_position or 0}

@@ -1,10 +1,11 @@
+// frontend/src/pages/SessionsView.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/mainComps/Header.jsx';
 import NavAside from '../components/mainComps/NavAside.jsx';
 import SessionItem from '../components/sessionsComps/sessionItem.jsx';
 import CreateSessionModal from '../components/sessionsComps/CreateSessionModal.jsx';
-import { getSessions, createSession, getBookById } from '../services/api';
+import { getSessions, createSession, getBookById, getSessionParticipantsCount, getSessionNotesCount, getSessionProgress } from '../services/api';
 
 export default function SessionsView() {
   const [sessions, setSessions] = useState([]);
@@ -17,7 +18,8 @@ export default function SessionsView() {
   useEffect(() => {
     loadSessions();
   }, []);
-    const sortSessions = (sessionsList, order) => {
+
+  const sortSessions = (sessionsList, order) => {
     return [...sessionsList].sort((a, b) => {
       if (order === 'asc') {
         return a.name.localeCompare(b.name, 'ru');
@@ -31,27 +33,44 @@ export default function SessionsView() {
     setSortOrder(order);
     setSessions(sortSessions(sessions, order));
   };
+
   const loadSessions = async () => {
     try {
       setLoading(true);
       const sessionsData = await getSessions();
-      console.log('Sessions loaded:', sessionsData);
       
-      // Загружаем информацию о книгах
       const booksData = {};
-      for (const session of sessionsData) {
+      const sessionsWithStats = await Promise.all(sessionsData.map(async (session) => {
+        // Загружаем книгу
         if (!booksData[session.book_id]) {
           try {
             const book = await getBookById(session.book_id);
             booksData[session.book_id] = book;
           } catch (err) {
-            console.error('Error loading book:', err);
             booksData[session.book_id] = { title: 'Неизвестно', author: 'Неизвестен' };
           }
         }
-      }
+        
+        // Считаем участников
+        const members = await getSessionParticipantsCount(session.id);
+        
+        // Считаем заметки
+        const notes = await getSessionNotesCount(session.id);
+        
+        // Считаем прогресс
+        const progress = await getSessionProgress(session.id, session.book_id);
+        
+        return {
+          ...session,
+          members,
+          notes,
+          progress
+        };
+      }));
+      
       setBooks(booksData);
-      setSessions(sessionsData);
+      const sortedSessions = sortSessions(sessionsWithStats, sortOrder);
+      setSessions(sortedSessions);
     } catch (error) {
       console.error('Error loading sessions:', error);
     } finally {
@@ -59,17 +78,30 @@ export default function SessionsView() {
     }
   };
 
-
-
   const handleCreateSession = async (sessionData) => {
     try {
       const newSession = await createSession(sessionData);
+      await loadSessions(); // Перезагружаем список после создания
       navigate(`/session-reader?sessionId=${newSession.id}&name=${encodeURIComponent(newSession.name)}`);
     } catch (error) {
       console.error('Error creating session:', error);
       alert('Ошибка при создании сессии');
     }
   };
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <div className='flex'>
+          <NavAside />
+          <div className='bg-beige-1 flex text-accent-2 w-screen p-10 justify-center items-center'>
+            <div>Загрузка...</div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -83,7 +115,6 @@ export default function SessionsView() {
             </div>
             
             <div className="flex gap-4">
-              {/* Сортировка */}
               <div className="flex gap-2 items-center">
                 <span className="text-sm text-gray-600">Сортировать:</span>
                 <button
@@ -120,34 +151,31 @@ export default function SessionsView() {
             </div>
           </div>
 
-          {loading && <div className="text-center py-10">Загрузка...</div>}
-
-          {!loading && sessions.length === 0 && (
+          {sessions.length === 0 ? (
             <div className="text-center py-20 text-gray-500">
               <p className="text-xl mb-4">У вас пока нет сессий</p>
               <p>Нажмите "Создать сессию", чтобы начать совместное чтение</p>
             </div>
+          ) : (
+            <div className='grid grid-cols-2 mt-4 gap-10'>
+              {sessions.map((session) => {
+                const book = books[session.book_id];
+                return (
+                  <SessionItem 
+                    key={session.id}
+                    id={session.id}
+                    name={session.name}
+                    book_title={book?.title || 'Загрузка...'}
+                    book_author={book?.author || 'Неизвестен'}
+                    progress={session.progress || 0}
+                    members={session.members || 1}
+                    notes={session.notes || 0}
+                    link={session.link}
+                  />
+                );
+              })}
+            </div>
           )}
-
-          <div className='grid grid-cols-2 mt-4 gap-10'>
-            {sessions.map((session) => {
-              const book = books[session.book_id];
-              return (
-                <SessionItem 
-                  key={session.id}
-                  id={session.id}
-                  name={session.name}
-                  book_title={book?.title || 'Загрузка...'}
-                  book_author={book?.author || 'Неизвестен'}
-                  progress={session.progress || 0}
-                  members={session.members || 0}
-                  notes={session.notes || 0}
-                  link={session.link}
-                  role_id={session.role_id}
-                />
-              );
-            })}
-          </div>
         </div>
       </div>
 

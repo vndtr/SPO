@@ -1,8 +1,9 @@
+// frontend/src/components/sessionsComps/sessionItem.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Progressbar from '../UI/Progressbar';
 
-export default function SessionItem({ id, name, book_id, book_title, book_author, progress, members, notes, link }) {
+export default function SessionItem({ id, name, book_title, book_author, progress, members, notes, link }) {
   const [copied, setCopied] = useState(false);
 
   const copyLink = () => {
@@ -30,9 +31,11 @@ export default function SessionItem({ id, name, book_id, book_title, book_author
           </button>
         </div>
         <div className='flex my-4 justify-end'>
-<Link to={`/session-reader?sessionId=${id}&name=${encodeURIComponent(name)}`}>
-  <button>Перейти</button>
-</Link>
+          <Link to={`/session-reader?sessionId=${id}&name=${encodeURIComponent(name)}`}>
+            <button className='bg-accent-1 text-beige-1 rounded-2xl px-6 py-1 hover:cursor-pointer'>
+              Перейти
+            </button>
+          </Link>
         </div>
       </div>
     </div>

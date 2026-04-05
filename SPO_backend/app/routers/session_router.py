@@ -137,3 +137,45 @@ async def update_participant_role(
         raise HTTPException(status_code=400, detail=f"Failed to update role: {e}")
     
     return {"message": "Role updated successfully"}
+@session_router.post('/{session_id}/progress')
+async def update_session_progress(
+    session_id: int,
+    request: Request,
+    progress_data: dict,
+    db: AsyncSession = Depends(get_session)
+):
+    user = request.state.user
+    
+    stmt = select(models.Session_Participant).where(
+        models.Session_Participant.user_id == user.id,
+        models.Session_Participant.session_id == session_id
+    )
+    participant = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not participant:
+        raise HTTPException(status_code=403, detail="Not a participant")
+    
+    participant.last_page = progress_data.get('last_page', 0)
+    
+    await db.commit()
+    
+    return {"message": "Progress updated"}
+
+@session_router.get('/{session_id}/progress')
+async def get_session_progress(
+    session_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    user = request.state.user
+    
+    stmt = select(models.Session_Participant).where(
+        models.Session_Participant.user_id == user.id,
+        models.Session_Participant.session_id == session_id
+    )
+    participant = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not participant:
+        return {"last_page": 0}
+    
+    return {"last_page": participant.last_page or 0}

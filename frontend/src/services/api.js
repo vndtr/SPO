@@ -223,6 +223,26 @@ export const updateSoloNote = async (data) => {
   return response.data;
 };
 
+export const getSoloProgress = async (soloSessionId) => {
+    try {
+        const response = await api.get(`/solo_session/${soloSessionId}/progress`);
+        return response.data.last_page || 0;
+    } catch (error) {
+        return 0;
+    }
+};
+
+export const updateSoloProgress = async (soloSessionId, page) => {
+    try {
+        await api.post(`/solo_session/${soloSessionId}/progress`, {
+            last_page: page
+        });
+    } catch (error) {
+        console.error('Error saving solo progress:', error);
+    }
+};
+
+
 //СЕССИИ 
 
 export const getSessions = async () => {
@@ -267,12 +287,71 @@ export const joinSessionByLink = async (link, sessionId) => {
   return response.data;
 };
 
+
+
+export const getSessionProgress = async (sessionId) => {
+    try {
+        const response = await api.get(`/session/${sessionId}/progress`);
+        const lastPage = response.data.last_page || 0;
+        
+        // Для прогресса в процентах нужно знать общее количество страниц книги
+        // Сначала получим сессию, чтобы узнать book_id
+        const sessionResponse = await api.get(`/session/info/${sessionId}`);
+        const bookId = sessionResponse.data.book_id;
+        
+        const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
+        if (totalPages && parseInt(totalPages) > 0) {
+            const progress = Math.round((lastPage / parseInt(totalPages)) * 100);
+            return Math.min(progress, 100);
+        }
+        return 0;
+    } catch (error) {
+        console.error('Error getting session progress:', error);
+        return 0;
+    }
+};
+
 export const getSessionNotifications = async (offset = 0, limit = 10) => {
   const response = await api.post('/session/notifications', {
     offset: offset,
     limit: limit
   });
   return response.data;
+};
+
+
+
+export const getSessionParticipantsCount = async (sessionId) => {
+    try {
+        const response = await api.get(`/session/${sessionId}`);
+        return response.data.length;
+    } catch (error) {
+        console.error('Error getting participants count:', error);
+        return 1;
+    }
+};
+
+export const getSessionNotesCount = async (sessionId) => {
+    try {
+        const response = await api.get('/session/note/', {
+            params: { session_id: sessionId }
+        });
+        return response.data.length;
+    } catch (error) {
+        console.error('Error getting notes count:', error);
+        return 0;
+    }
+};
+
+
+export const updateSessionProgress = async (sessionId, page) => {
+    try {
+        await api.post(`/session/${sessionId}/progress`, {
+            last_page: page
+        });
+    } catch (error) {
+        console.error('Error saving session progress:', error);
+    }
 };
 
 // Заметки в сессии
@@ -367,8 +446,6 @@ export const deleteAnswer = async (answerId, sessionId, noteId) => {
   });
   return response.data;
 };
-
-
 
 // НАСТРОЙКИ
 
@@ -467,31 +544,6 @@ export const getRecentAnswers = async (limit = 10) => {
     return response.data;
 };
 
-// Получение последней открытой книги (личное чтение)
-export const getLastOpenedBook = async () => {
-    try {
-        const response = await api.get('/solo_session/last');
-        console.log('Last opened book response:', response.data);
-        
-        // Если ответ null или нет данных
-        if (!response.data || !response.data.book_id) {
-            return null;
-        }
-        
-        const book = await getBookById(response.data.book_id);
-        return {
-            id: book.id,
-            title: book.title,
-            author: book.author,
-            progress: response.data.last_position || 0,
-            cover_img: book.cover_img
-        };
-    } catch (error) {
-        console.error('Error getting last opened book:', error);
-        return null;
-    }
-};
-
 // Получение последних сессий пользователя
 export const getRecentSessions = async (limit = 3) => {
     try {
@@ -522,6 +574,53 @@ export const getRecentSessions = async (limit = 3) => {
     } catch (error) {
         console.error('Error getting recent sessions:', error);
         return [];
+    }
+};
+
+export const getBookProgress = async (bookId) => {
+    try {
+        const response = await api.get(`/solo_session/?book_id=${bookId}`);
+        if (response.data && response.data.last_position) {
+            const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
+            if (totalPages && parseInt(totalPages) > 0) {
+                const progress = Math.round((response.data.last_position / parseInt(totalPages)) * 100);
+                return Math.min(progress, 100);
+            }
+        }
+        return 0;
+    } catch (error) {
+        return 0;
+    }
+};
+
+export const getLastOpenedBook = async () => {
+    try {
+        const response = await api.get('/solo_session/last');
+        if (!response.data || !response.data.book_id) {
+            return null;
+        }
+        const book = await getBookById(response.data.book_id);
+        const lastPage = response.data.last_position || 0;
+        
+        // Получаем общее количество страниц
+        const totalPages = localStorage.getItem(`book_${book.id}_total_pages`);
+        let progress = 0;
+        if (totalPages && parseInt(totalPages) > 0) {
+            progress = Math.round((lastPage / parseInt(totalPages)) * 100);
+            progress = Math.min(progress, 100);
+        }
+        
+        return {
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            progress: progress,
+            last_page: lastPage,
+            cover_img: book.cover_img
+        };
+    } catch (error) {
+        console.error('Error getting last opened book:', error);
+        return null;
     }
 };
 

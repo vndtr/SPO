@@ -1,7 +1,7 @@
 // frontend/src/components/readerComps/BookReader.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { getBookPage, getSoloAnnotations, getSessionAnnotations } from '../services/api';
-
+import { updateSoloProgress, getSoloProgress, updateSessionProgress, getSessionProgress } from '../services/api';
 export default function BookReader({ 
   bookId, 
   soloSessionId,
@@ -19,9 +19,11 @@ export default function BookReader({
   const [pageStartIndex, setPageStartIndex] = useState(0);
   const [annotations, setAnnotations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isInitializedRef = useRef(false);
   const containerRef = useRef(null);
-  const wsRef = useRef(null);
-
+   const wsRef = useRef(null);
+   const initialLoadRef = useRef(false);
+;
   const getGlobalIndex = (node, offset) => {
     if (!containerRef.current) return 0;
     const range = document.createRange();
@@ -187,64 +189,124 @@ export default function BookReader({
     return [];
   };
 
-  const loadPage = async (page) => {
-    try {
-        setLoading(true);
-        const data = await getBookPage(bookId, page);
-        
-        setContent(data.content);
-        setFullText(data.full_text || '');
-        setPageStartIndex(data.start_index || 0);
-        setTotalPages(data.total_pages || 1);
-        setCurrentPage(page);
-        
-        localStorage.setItem(`book_${bookId}_page`, page);
-        
-        const allAnnotations = await loadAnnotationsForPage();
-        
-        const pageAnnotations = allAnnotations.filter(ann => 
-            ann.start_index >= data.start_index && ann.end_index <= data.end_index
-        );
-        
-        setAnnotations(pageAnnotations);
-        
-        // Применяем настройки после загрузки контента
-        setTimeout(() => {
-            if (containerRef.current && settings) {
-                const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
-                const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
-                const fontSize = fontSizeMap[fontSizeValue] || '14px';
-                
-                const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
-                const textColor = textColors[settings.background_color] || '#374151';
-                
-                const paragraphs = containerRef.current.querySelectorAll('p');
-                paragraphs.forEach(p => {
-                    p.style.fontSize = fontSize;
-                    p.style.color = textColor;
-                });
-            }
-        }, 100);
-        
-    } catch (err) {
-        console.error('Error loading page:', err);
-    } finally {
-        setLoading(false);
+const loadPage = async (page) => {
+  try {
+    setLoading(true);
+    const data = await getBookPage(bookId, page);
+    
+    setContent(data.content);
+    setFullText(data.full_text || '');
+    setPageStartIndex(data.start_index || 0);
+    setTotalPages(data.total_pages || 1);
+    setCurrentPage(page);
+    
+    localStorage.setItem(`book_${bookId}_page`, page);
+
+    // Сохраняем прогресс в бэкенд
+    if (soloSessionId) {
+      await updateSoloProgress(soloSessionId, page);
+      // Отправляем событие обновления прогресса для главной страницы
+      window.dispatchEvent(new CustomEvent('progressUpdated', { detail: { bookId, page } }));
+    } else if (sessionId) {
+      await updateSessionProgress(sessionId, page);
     }
+    
+    const allAnnotations = await loadAnnotationsForPage();
+    
+    const pageAnnotations = allAnnotations.filter(ann => 
+      ann.start_index >= data.start_index && ann.end_index <= data.end_index
+    );
+    
+    setAnnotations(pageAnnotations);
+    
+    // Применяем настройки после загрузки контента
+    setTimeout(() => {
+      if (containerRef.current && settings) {
+        const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
+        const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
+        const fontSize = fontSizeMap[fontSizeValue] || '14px';
+        
+        const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
+        const textColor = textColors[settings.background_color] || '#374151';
+        
+        const paragraphs = containerRef.current.querySelectorAll('p');
+        paragraphs.forEach(p => {
+          p.style.fontSize = fontSize;
+          p.style.color = textColor;
+        });
+      }
+    }, 100);
+    
+  } catch (err) {
+    console.error('Error loading page:', err);
+  } finally {
+    setLoading(false);
+  }
 };
 
-  useEffect(() => {
-    if (content && !loading) {
-      const modalOpen = document.querySelector('.fixed.inset-0');
-      if (modalOpen) {
-        return;
+// Загружаем книгу при монтировании
+useEffect(() => {
+  if (bookId && !initialLoadRef.current) {
+    initialLoadRef.current = true;
+    const savedPage = localStorage.getItem(`book_${bookId}_page`);
+    const pageToLoad = savedPage ? parseInt(savedPage) : 0;
+    loadPage(pageToLoad);
+  }
+}, [bookId]);
+
+// Загружаем сохранённый прогресс из бэкенда
+useEffect(() => {
+  const loadProgress = async () => {
+    try {
+      if (soloSessionId) {
+        const lastPage = await getSoloProgress(soloSessionId);
+        if (lastPage > 0 && lastPage !== currentPage) {
+          await loadPage(lastPage);
+        }
+      } else if (sessionId) {
+        const lastPage = await getSessionProgress(sessionId);
+        if (lastPage > 0 && lastPage !== currentPage) {
+          await loadPage(lastPage);
+        }
       }
-      const timer = setTimeout(() => {
-        applyAllHighlights();
-      }, 200);
-      return () => clearTimeout(timer);
+    } catch (err) {
+      console.error('Error loading progress:', err);
     }
-  }, [content, loading, annotations]);
+  };
+  
+  // Загружаем прогресс только после того, как загрузилась первая страница
+  if (content && !loading && totalPages > 1 && currentPage === 0) {
+    loadProgress();
+  }
+}, [soloSessionId, sessionId, content, loading, totalPages, currentPage]);
+
+  useEffect(() => {
+    if (bookId && !isInitializedRef.current) {
+      isInitializedRef.current = true;
+      
+      const loadInitialPage = async () => {
+        let lastPage = 0;
+        
+        // Получаем сохранённый прогресс
+        if (soloSessionId) {
+          lastPage = await getSoloProgress(soloSessionId);
+        } else if (sessionId) {
+          lastPage = await getSessionProgress(sessionId);
+        }
+        
+        // Если есть сохранённый прогресс, загружаем его, иначе загружаем сохранённую страницу из localStorage или 0
+        if (lastPage > 0 && lastPage < totalPages) {
+          await loadPage(lastPage, false); // Не сохраняем прогресс повторно
+        } else {
+          const savedPage = localStorage.getItem(`book_${bookId}_page`);
+          const pageToLoad = savedPage ? parseInt(savedPage) : 0;
+          await loadPage(pageToLoad, true);
+        }
+      };
+      
+      loadInitialPage();
+    }
+  }, [bookId, soloSessionId, sessionId]); 
 
   useEffect(() => {
     if (content && !loading && annotations.length > 0) {

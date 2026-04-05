@@ -3,7 +3,7 @@ import Header from '../components/mainComps/Header.jsx';
 import NavAside from '../components/mainComps/NavAside.jsx';
 import LibraryBook from '../components/libraryComps/LibraryBook.jsx';
 import UploadBookModal from '../components/libraryComps/UploadBookModal.jsx';
-import { getBooks, uploadBook, deleteBook, getCurrentUser } from '../services/api';
+import { getBooks, uploadBook, deleteBook, getCurrentUser, getBookProgress } from '../services/api';
 
 export default function LibraryView() {
   const [books, setBooks] = useState([]);
@@ -52,24 +52,59 @@ const sortBooks = (booksList, order) => {
 
     const loadBooks = async () => {
     try {
-      setLoading(true);
-      const data = await getBooks();
-      const adaptedBooks = data.map(book => ({
-        id: book.id,
-        title: book.title,
-        author: book.author,
-        progress: 0,
-        coverImage: book.cover_img || '',
-        coverColor: 'bg-blue-300'
-      }));
-      const sortedBooks = sortBooks(adaptedBooks, sortOrder);
-      setBooks(sortedBooks);
+        setLoading(true);
+        const data = await getBooks();
+
+        
+        
+        const adaptedBooks = await Promise.all(data.map(async (book) => {
+            const progress = await getBookProgress(book.id);
+            return {
+                id: book.id,
+                title: book.title,
+                author: book.author,
+                progress: progress,
+                coverImage: book.cover_img || '',
+                coverColor: 'bg-blue-300'
+            };
+        }));
+        
+        const sortedBooks = sortBooks(adaptedBooks, sortOrder);
+        setBooks(sortedBooks);
     } catch (error) {
-      console.error('Error loading books:', error);
+        console.error('Error loading books:', error);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
+};
+
+// frontend/src/pages/LibraryView.jsx
+
+useEffect(() => {
+  loadCurrentUser();
+  
+  // Слушаем обновления прогресса
+  const handleProgressUpdate = (event) => {
+    const { bookId, page } = event.detail;
+    // Обновляем прогресс книги в списке
+    setBooks(prevBooks => prevBooks.map(book => {
+      if (book.id === bookId) {
+        const totalPages = localStorage.getItem(`book_${bookId}_total_pages`);
+        if (totalPages && parseInt(totalPages) > 0) {
+          const progress = Math.round((page / parseInt(totalPages)) * 100);
+          return { ...book, progress: Math.min(progress, 100) };
+        }
+      }
+      return book;
+    }));
   };
+  
+  window.addEventListener('progressUpdated', handleProgressUpdate);
+  
+  return () => {
+    window.removeEventListener('progressUpdated', handleProgressUpdate);
+  };
+}, []);
 
   const handleUploadBook = async (file, title, author) => {
     if (!currentUser || !currentUser.user_id) {
