@@ -1,4 +1,3 @@
-// frontend/src/components/readerComps/ReaderHeader.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/components/reader.css';
@@ -8,7 +7,7 @@ export default function ReaderHeader({
   onSettingsClick,
   onToggleSidebar,
   isSidebarOpen = true,
-  bookTitle = "Мастер и Маргарита",
+  bookTitle = "",
   bookAuthor = "",
   sessionId = null,
   currentUserId = null,
@@ -155,20 +154,7 @@ export default function ReaderHeader({
                       >
                         Настройки
                       </li>
-                      <Link 
-                        to="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setModalOpen(false);
-                          if (isSession && onLeaveSession) {
-                            onLeaveSession();
-                          }
-                        }}
-                      >
-                        <li className="reader-header-menu-item">
-                          Выйти из сессии
-                        </li>
-                      </Link>
+                      
                     </ul>
                   </div>
                 </div>

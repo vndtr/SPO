@@ -1,15 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 import models, schemas
-from sqlalchemy import select, func, cast, Float, insert
+from sqlalchemy import func, cast, Float, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from fastapi import HTTPException, Depends
 from deps import get_session
-
-
-
 # solosession note 
+
 async def get_solo_session_notes_by_solo_session_id(
         user_id:int,
         solo_session_id:int,db:AsyncSession = Depends(get_session)):
@@ -24,9 +22,6 @@ async def get_solo_session_notes_by_solo_session_id(
     q = select(models.Solo_Note).where(models.Solo_Note.solo_session_id == solo_session_id)
     result = (await db.execute(q)).scalars().all()
     return result
-
-
-
 
 async def create_solo_session_note(
         user_id:int,

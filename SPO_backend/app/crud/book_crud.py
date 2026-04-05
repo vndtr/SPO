@@ -10,7 +10,7 @@ from deps import get_session
 from minio_api import upload_cover_to_minio, delete_book_from_minio, upload_book_to_minio
 from typing import Optional
 # book
- 
+
 async def create_book( 
     title:str = Form(...),
     author:str = Form(...),

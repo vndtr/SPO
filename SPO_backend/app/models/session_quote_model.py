@@ -5,7 +5,6 @@ from database import Base
 from typing import Optional, List
 from datetime import datetime, timezone
 
-
 class Session_Quote(Base):
     __tablename__ = "session_quote"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

@@ -83,7 +83,6 @@ export default function SessionReaderNote({
     }
   };
 
-  // Цитата
   if (type === 'quote') {
     return (
       <div className={`reader-note-quote ${getBgColorClass()}`} onClick={handleCardClick}>
@@ -115,7 +114,6 @@ export default function SessionReaderNote({
     };
   }, [id, showReplies]);
 
-  // Заметка с ответами
   return (
     <div 
       id={elementId}

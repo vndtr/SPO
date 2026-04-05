@@ -1,4 +1,3 @@
-// frontend/src/components/readerComps/ReaderSettingsModal.jsx
 import React, { useState, useEffect } from 'react';
 import { getUserSettings, updateUserSettings } from '../../services/api';
 import '../../styles/components/modal.css';
@@ -42,7 +41,6 @@ export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
             await updateUserSettings(settings);
             localStorage.setItem('reader_settings', JSON.stringify(settings));
             
-            // Применяем тему ко всему body
             applyThemeToBody(settings.background_color);
             
             window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings }));
@@ -69,19 +67,12 @@ export default function ReaderSettingsModal({ onClose, onSettingsApplied }) {
         }
     };
 
-    // Функция для применения темы ко всему body
     const applyThemeToBody = (theme) => {
-        // Удаляем старые классы
         document.body.classList.remove('reader-theme-light', 'reader-theme-dark', 'reader-theme-beige');
-        
-        // Добавляем новый класс
         document.body.classList.add(`reader-theme-${theme}`);
-        
-        // Сохраняем в localStorage
         localStorage.setItem('reader_theme', theme);
     };
 
-    // Применяем тему при загрузке компонента
     useEffect(() => {
         const savedTheme = localStorage.getItem('reader_theme') || 'light';
         if (savedTheme !== settings.background_color) {

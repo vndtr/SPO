@@ -1,15 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete,  func, cast, Float, insert
 import models, schemas
-from sqlalchemy import select, func, cast, Float, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, Depends
 from deps import get_session
-
-
-
 # session note notes
+
 async def create_session_note(user_id:int, note:schemas.SessionNoteCreate,db:AsyncSession = Depends(get_session)):
     q_check = select(models.Session_Participant).where(models.Session_Participant.user_id == user_id, models.Session_Participant.session_id == note.session_id)
     participant = (await db.execute(q_check)).scalar_one_or_none()
@@ -91,7 +88,7 @@ async def delete_session_note(
     if db_note.participant_id != participant.id:
         raise HTTPException(status_code=403, detail="You are not allowed to delete this note")
     
-    # Удаляем заметку (ответы удалятся каскадно из-за cascade="all, delete-orphan")
+    # Удаляем заметку 
     await db.delete(db_note)
     
     try:

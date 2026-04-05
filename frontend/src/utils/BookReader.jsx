@@ -1,4 +1,3 @@
-// frontend/src/utils/BookReader.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { getBookPage, getSoloAnnotations, getSessionAnnotations } from '../services/api';
 import { updateSoloProgress, getSoloProgress, updateSessionProgress, getSessionProgress } from '../services/api';
@@ -82,7 +81,6 @@ export default function BookReader({
     return null;
   };
 
-  // ========== ЦВЕТА ДЛЯ ЦИТАТ (CSS классы) ==========
   const getQuoteColorClass = (color) => {
     const classes = {
       yellow: 'highlighted-quote yellow',
@@ -93,7 +91,6 @@ export default function BookReader({
     return classes[color] || 'highlighted-quote yellow';
   };
 
-  // ========== ЦВЕТА ДЛЯ ЗАМЕТОК (CSS классы) ==========
   const getNoteColorClass = (color) => {
     const classes = {
       yellow: 'highlighted-note yellow',
@@ -104,7 +101,6 @@ export default function BookReader({
     return classes[color] || 'highlighted-note yellow';
   };
 
-  // ========== ПРИМЕНЕНИЕ ПОДСВЕТКИ ==========
   const applyHighlight = (span, annotation, isOwn = true) => {
     const type = annotation.type || (annotation.comment ? 'note' : 'quote');
     

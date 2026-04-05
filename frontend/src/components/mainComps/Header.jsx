@@ -1,4 +1,3 @@
-// frontend/src/components/mainComps/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { searchAll } from '../../services/api';

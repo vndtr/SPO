@@ -20,7 +20,7 @@ export default function LibraryBook({
     }
   };
 
-  // Всегда используем градиент на основе названия
+  //градиент на основе названия
   const coverStyle = {
     backgroundImage: generateBookGradient(title),
     backgroundSize: 'cover',

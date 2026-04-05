@@ -10,7 +10,6 @@ from typing import Optional
 
 book_router = APIRouter(prefix="/book", tags=["book"])
 
-
 @book_router.post('/')
 async def add_book(
     request: Request,
@@ -22,24 +21,17 @@ async def add_book(
 ):
     return await crud.create_book(title, author, request.state.user.id, book_cover, content, db)
 
-
 @book_router.get('/{book_id}', response_model=schemas.BookRead)
 async def get_book(
     book_id: int,
     request: Request,
     db: AsyncSession = Depends(get_session)
 ):
-    """Получить книгу по ID с проверкой доступа"""
     book = await db.get(models.Book, book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-    
-    # 1. Если пользователь владелец книги — разрешаем
+        raise HTTPException(status_code=404, detail="Book not found") 
     if book.user_id == request.state.user.id:
         return book
-    
-    # 2. Проверяем, есть ли сессия, в которой используется эта книга,
-    #    и является ли пользователь участником этой сессии
     from models import Session, Session_Participant
     
     session_query = await db.execute(
@@ -51,21 +43,16 @@ async def get_book(
         )
     )
     session = session_query.scalar_one_or_none()
-    
     if session:
-        # Пользователь участник сессии с этой книгой — разрешаем
         return book
     
-    # 3. Иначе — доступ запрещен
     raise HTTPException(status_code=403, detail="Access denied")
-
 
 @book_router.get('/', response_model=list[schemas.BookRead])
 async def get_books(
     request: Request,
     db: AsyncSession = Depends(get_session)
 ):
-    """Получить все книги пользователя (только свои)"""
     return await crud.read_books_by_user(request.state.user.id, db)
 
 @book_router.patch('/{book_id}')
@@ -79,7 +66,6 @@ async def update_book(
     db: AsyncSession = Depends(get_session)
 ):
     return await crud.update_book(request.state.user.id, book_id, title, author, book_cover, content, db)
-
 
 @book_router.delete('/{book_id}')
 async def delete_book(

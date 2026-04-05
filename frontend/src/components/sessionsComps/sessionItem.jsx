@@ -1,4 +1,3 @@
-// frontend/src/components/sessionsComps/sessionItem.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Progressbar from '../UI/Progressbar';

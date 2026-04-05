@@ -1,4 +1,3 @@
-// frontend/src/components/readerComps/ReaderAside.jsx
 import React, { useState, useEffect } from 'react';
 import ReaderNote from './ReaderNote.jsx';
 import ReaderModal from './ReaderModal.jsx';

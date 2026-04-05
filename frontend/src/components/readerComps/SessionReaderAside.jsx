@@ -1,4 +1,3 @@
-// frontend/src/components/readerComps/SessionReaderAside.jsx
 import React, { useState, useEffect } from 'react';
 import SessionReaderNote from './SessionReaderNote.jsx';
 import SessionReaderModal from './SessionReaderModal.jsx';

@@ -27,7 +27,6 @@ async def get_session_participants(
 
     return participants
 
-
 @session_router.get('/')
 async def get_sessions(
         request:Request,
@@ -35,8 +34,6 @@ async def get_sessions(
     participants = await crud.get_sessions_by_user_id(request.state.user.id, db)
 
     return participants
-
-
 
 @session_router.post('/notifications')
 async def get_session_participants(
@@ -46,7 +43,6 @@ async def get_session_participants(
     result = await crud.get_notifications_by_user_id(offset=session_notify.offset, limit=session_notify.limit, user_id=requst.state.user.id, db=db)
 
     return result
-
 
 @session_router.post('/{link}', summary="Переход по ссылке добавляет участника в сессию")
 async def join_by_link(
@@ -97,7 +93,6 @@ async def update_participant_role(
     if not current_participant or current_participant.role_id != 2:
         raise HTTPException(status_code=403, detail="Only teacher can change roles")
     
-    # Проверяем, что целевой пользователь существует в сессии
     stmt_target = select(models.Session_Participant).where(
         models.Session_Participant.user_id == user_id,
         models.Session_Participant.session_id == session_id
@@ -107,21 +102,19 @@ async def update_participant_role(
     if not target_participant:
         raise HTTPException(status_code=404, detail="User not found in this session")
     
-    # Нельзя менять роль создателя сессии (того, у кого user_id совпадает с session.user_id)
+    # Нельзя менять роль создателя сессии 
     stmt_session = select(models.Session).where(models.Session.id == session_id)
     session = (await db.execute(stmt_session)).scalar_one_or_none()
     
     if session and session.user_id == user_id:
         raise HTTPException(status_code=403, detail="Cannot change creator's role")
     
-     # Обновляем роль
     target_participant.role_id = role_data.get('role_id', 1)
     
     try:
         await db.commit()
         await db.refresh(target_participant)
-        
-        # Отправляем WebSocket уведомление всем участникам сессии
+        # Отправляем вебсокет уведомление всем участникам сессии
         await manager.broadcast(
             session_id=session_id,
             message={
@@ -130,13 +123,13 @@ async def update_participant_role(
                 "new_role_id": target_participant.role_id,
                 "action": "reload"
             }
-        )
-        
+        )    
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to update role: {e}")
     
     return {"message": "Role updated successfully"}
+
 @session_router.post('/{session_id}/progress')
 async def update_session_progress(
     session_id: int,
@@ -144,8 +137,7 @@ async def update_session_progress(
     progress_data: dict,
     db: AsyncSession = Depends(get_session)
 ):
-    user = request.state.user
-    
+    user = request.state.user 
     stmt = select(models.Session_Participant).where(
         models.Session_Participant.user_id == user.id,
         models.Session_Participant.session_id == session_id
@@ -156,7 +148,6 @@ async def update_session_progress(
         raise HTTPException(status_code=403, detail="Not a participant")
     
     participant.last_page = progress_data.get('last_page', 0)
-    
     await db.commit()
     
     return {"message": "Progress updated"}
@@ -188,8 +179,7 @@ async def leave_session(
 ):
     user = request.state.user
     print(f"User {user.id} trying to leave session {session_id}")
-    
-    # Проверяем, является ли пользователь участником сессии
+
     stmt = select(models.Session_Participant).where(
         models.Session_Participant.user_id == user.id,
         models.Session_Participant.session_id == session_id
@@ -199,7 +189,6 @@ async def leave_session(
     if not participant:
         raise HTTPException(status_code=404, detail="You are not a participant of this session")
     
-    # Проверяем, является ли пользователь создателем сессии
     stmt_session = select(models.Session).where(models.Session.id == session_id)
     session = (await db.execute(stmt_session)).scalar_one_or_none()
     
@@ -211,7 +200,7 @@ async def leave_session(
         await db.delete(session)
         await db.commit()
         
-        # Отправляем WebSocket уведомление
+        # Отправляем вебсокет уведомление
         await manager.broadcast(
             session_id=session_id,
             message={
@@ -224,24 +213,19 @@ async def leave_session(
         return {"message": "Session deleted", "is_creator": True}
     else:
         # Обычный участник - удаляем сначала всё, что связано с ним
-        
-        # 1. Удаляем ответы участника
+        # Удаляем ответы участника
         stmt_answers = delete(models.Answer).where(models.Answer.participant_id == participant.id)
         await db.execute(stmt_answers)
-        
-        # 2. Удаляем цитаты участника (ВАЖНО: ДО удаления заметок, чтобы избежать FK ошибок)
+        # Удаляем цитаты участника
         stmt_quotes = delete(models.Session_Quote).where(models.Session_Quote.participant_id == participant.id)
         await db.execute(stmt_quotes)
-        
-        # 3. Удаляем заметки участника
+        # Удаляем заметки участника
         stmt_notes = delete(models.Session_Note).where(models.Session_Note.participant_id == participant.id)
         await db.execute(stmt_notes)
-        
-        # 4. Удаляем самого участника
+        # Удаляем самого участника
         await db.delete(participant)
         await db.commit()
         
-        # Отправляем WebSocket уведомление
         await manager.broadcast(
             session_id=session_id,
             message={

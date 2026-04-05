@@ -12,16 +12,13 @@ load_dotenv()
 
 ws_router = APIRouter(prefix='/ws', tags=['websocket'])
 
-
 @ws_router.websocket("/session/{session_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     session_id: int,
     token: str = Query(...)
 ):
-    # Принимаем соединение ТОЛЬКО здесь
     await websocket.accept()
-    
     try:
         SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
         ALGORITHM = "HS256"
@@ -64,21 +61,15 @@ async def notifications_endpoint(
     websocket: WebSocket,
     token: str = Query(...)
 ):
-    print(f"Notification WebSocket attempt with token: {token[:50]}...")
-    
     try:
         await websocket.accept()
-        print("WebSocket accepted")
-        
         SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
         ALGORITHM = "HS256"
         
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
-        print(f"Decoded user_id: {user_id}")
-        
+      
         if not user_id:
-            print("No user_id, closing")
             await websocket.close(code=1008)
             return
         
@@ -86,13 +77,10 @@ async def notifications_endpoint(
             notification_connections[user_id] = []
         notification_connections[user_id].append(websocket)
         
-        print(f"User {user_id} connected to notifications. Total connections: {len(notification_connections[user_id])}")
-        
         while True:
             await websocket.receive_text()
             
     except WebSocketDisconnect:
-        print(f"User {user_id} disconnected from notifications")
         if user_id and user_id in notification_connections:
             if websocket in notification_connections[user_id]:
                 notification_connections[user_id].remove(websocket)

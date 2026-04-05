@@ -62,9 +62,7 @@ async def update_solo_progress(
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
     session.last_position = progress_data.get('last_page', 0)
-    
     await db.commit()
     
     return {"message": "Progress updated"}
@@ -76,13 +74,11 @@ async def get_solo_progress(
     db: AsyncSession = Depends(get_session)
 ):
     user = request.state.user
-    
     stmt = select(models.Solo_Session).where(
         models.Solo_Session.id == solo_session_id,
         models.Solo_Session.user_id == user.id
     )
-    session = (await db.execute(stmt)).scalar_one_or_none()
-    
+    session = (await db.execute(stmt)).scalar_one_or_none() 
     if not session:
         return {"last_page": 0}
     

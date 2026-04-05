@@ -9,10 +9,10 @@ from fastapi import HTTPException, Depends
 from deps import get_session
 from passlib.context import CryptContext
 # USER
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
-
 
 async def create_user(user:schemas.UserCreate,db:AsyncSession = Depends(get_session)):
     db_user = models.User(
@@ -30,13 +30,11 @@ async def create_user(user:schemas.UserCreate,db:AsyncSession = Depends(get_sess
         return HTTPException(status_code=400, detail="Error")
     return db_user
 
-
 async def read_user(user:schemas.UserRead,db:AsyncSession = Depends(get_session)):
     result = await db.execute(
         select(models.User).where(models.User.id == user.id)
     )
     return result.scalar_one_or_none()
-
 
 async def update_user(user_id:int,user:schemas.UserUpdate,db:AsyncSession = Depends(get_session)):
     result = await db.execute(
@@ -63,7 +61,6 @@ async def update_user(user_id:int,user:schemas.UserUpdate,db:AsyncSession = Depe
         return HTTPException(status_code=400, detail="Error")
     
     return db_user
-
 
 async def delete_user(user:schemas.UserCreate,db:AsyncSession = Depends(get_session)):
     result = await db.execute(

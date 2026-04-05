@@ -7,7 +7,6 @@ from .session_participant_model import Session_Participant
 
 from datetime import timezone, datetime
 
-
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
     id: Mapped[int] = mapped_column(primary_key=True)

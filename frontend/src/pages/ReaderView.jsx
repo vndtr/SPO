@@ -1,4 +1,3 @@
-// frontend/src/pages/ReaderView.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ReaderHeader from '../components/readerComps/ReaderHeader.jsx';

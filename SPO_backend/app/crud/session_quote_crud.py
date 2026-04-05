@@ -7,8 +7,6 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, Depends
 from deps import get_session
 
-
-
 async def create_session_quote(
         user_id:int,
         quote:schemas.SessionQuoteCreate,

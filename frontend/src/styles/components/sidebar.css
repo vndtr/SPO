@@ -1,5 +1,3 @@
-/* src/styles/components/sidebar.css */
-
 /* Боковая панель */
 .sidebar {
   max-width: 30vw;
@@ -161,7 +159,6 @@
   }
 }
 
-/* Transition для боковой панели */
 .sidebar-transition {
   transition: width 0.3s ease, min-width 0.3s ease;
 }

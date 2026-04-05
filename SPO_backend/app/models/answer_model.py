@@ -6,7 +6,6 @@ from typing import Optional, List
 # from .session_participant_model import Session_Participant
 from datetime import datetime, timezone
 
-
 class Answer(Base):
     __tablename__ = "answer"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

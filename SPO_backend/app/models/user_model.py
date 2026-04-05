@@ -17,7 +17,6 @@ class User(Base):
     background_color: Mapped[str]= mapped_column (String(50), default="white")
     font_size: Mapped[int]= mapped_column (Integer, default=14)
 
-
     books: Mapped[List["Book"]] = relationship ("Book", back_populates="user", cascade="all, delete-orphan")
     solo_sessions: Mapped[List["Solo_Session"]] = relationship ("Solo_Session", back_populates="user", cascade="all, delete-orphan")
     session_participant: Mapped[List["Session_Participant"]] = relationship("Session_Participant", back_populates='user', cascade="all, delete-orphan")

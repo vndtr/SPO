@@ -1,7 +1,6 @@
-// frontend/src/App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import './styles/main.css'; // Добавляем импорт глобальных стилей
+import './styles/main.css'; 
 import MainView from './pages/MainView';
 import LibraryView from './pages/LibraryView';
 import ReaderView from './pages/ReaderView';
@@ -21,7 +20,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Слушаем события изменения настроек
     const handleSettingsChange = (event) => {
       setGlobalSettings(event.detail);
       applyGlobalStyles(event.detail);
@@ -59,8 +57,7 @@ function App() {
       const user = await getCurrentUser();
       if (user && user.user_id) {
         setIsAuthenticated(true);
-        
-        // Загружаем настройки из localStorage или с бэкенда
+    
         const savedSettings = localStorage.getItem('reader_settings');
         if (savedSettings) {
           setGlobalSettings(JSON.parse(savedSettings));

@@ -1,6 +1,4 @@
-/* src/styles/components/reader.css */
 
-/* ========== ReaderHeader ========== */
 .reader-header {
   display: flex;
   flex-direction: column;
@@ -152,7 +150,7 @@
   position: relative;
 }
 
-/* ========== ReaderAside ========== */
+/* боковая панель */
 .reader-aside {
   max-width: 15vw;
   min-width: 15vw;
@@ -216,7 +214,6 @@
   color: rgba(226, 232, 240, 0.7);
 }
 
-/* ========== Карточки заметок и цитат ========== */
 /* Общие стили для карточек */
 .reader-note-card,
 .reader-note-quote {
@@ -388,7 +385,7 @@
   transform: translateY(-1px);
 }
 
-/* ========== Ответы ========== */
+/*Ответы */
 .reader-note-replies {
   margin-top: 0.75rem;
   padding-left: 0.75rem;
@@ -439,7 +436,7 @@
   line-height: 1.4;
 }
 
-/* ========== SelectionMenu ========== */
+/*Меню */
 .selection-menu {
   position: fixed;
   z-index: 9999;
@@ -517,7 +514,7 @@
   transform: translateY(-1px);
 }
 
-/* ========== Модальные окна ========== */
+/* Модальные окна */
 .reader-modal-selected-text {
   background: #fef7e8;
   padding: 1rem;
@@ -598,7 +595,7 @@
   cursor: pointer;
 }
 
-/* ========== Настройки ========== */
+/* Настройки */
 .settings-font-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -653,7 +650,7 @@
   margin-bottom: 0.25rem;
 }
 
-/* ========== ParticipantsModal ========== */
+/* Модальное окно с участниками */
 .participants-loading {
   text-align: center;
   padding: 2rem;
@@ -753,7 +750,7 @@
   box-shadow: 0 2px 8px rgba(255, 140, 26, 0.3);
 }
 
-/* ========== Кнопки навигации ========== */
+/* Кнопки навигации */
 .reader-nav-buttons {
   position: fixed;
   bottom: 2rem;
@@ -792,7 +789,7 @@
   height: 1.5rem;
 }
 
-/* ========== Темы читалки ========== */
+/* Темы читалки */
 .reader-dark {
   background-color: #1a1a1a;
   color: #e5e5e5;
@@ -812,7 +809,7 @@
   color: #374151;
 }
 
-/* ========== Адаптивность ========== */
+/* Адаптивность */
 @media (max-width: 1024px) {
   .reader-header-logo-area {
     max-width: 25vw;
@@ -890,8 +887,6 @@
   }
 }
 
-/* src/styles/components/reader.css */
-
 /* Анимация для скрытия/показа боковой панели */
 .reader-aside {
   max-width: 15vw;
@@ -939,7 +934,6 @@
   transition: all 0.3s ease;
 }
 
-/* Когда сайдбар скрыт, контент занимает всё пространство */
 .reader-aside-hidden + .reader-main,
 .reader-layout:has(.reader-aside-hidden) .reader-main {
   margin-left: 0;
@@ -964,7 +958,6 @@
   transition: opacity 0.2s ease;
 }
 
-
 /* Скрытая область логотипа */
 .reader-header-logo-hidden {
   max-width: 0;
@@ -974,20 +967,17 @@
   border-right: none;
 }
 
-/* Красная линия с анимацией */
 .reader-header-red-line {
   height: 1px;
   background-color: #ef4444;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Когда сайдбар скрыт, контент занимает всё пространство */
 .reader-layout:has(.reader-aside-hidden) .reader-main {
   margin-left: 0;
   width: 100%;
 }
 
-/* Дополнительная анимация для кнопки */
 .reader-header-button {
   transition: all 0.2s ease;
 }
@@ -1078,7 +1068,7 @@
   color: #ffb347;
 }
 
-/* ========== МОДАЛЬНЫЕ ОКНА В ТЁМНОЙ ТЕМЕ ========== */
+/* Модальные окна в темной теме */
 .reader-theme-dark .modal-container {
   background-color: #2a2a2a;
   border-color: #4a4a4a;
@@ -1122,7 +1112,7 @@
   color: #ff8a8a;
 }
 
-/* ========== БЕЖЕВАЯ ТЕМА ДЛЯ МОДАЛЬНЫХ ОКОН ========== */
+/* Модальные окна в бежевой теме */
 .reader-theme-beige .modal-container {
   background-color: #fdf8f2;
   border-color: #d4a373;

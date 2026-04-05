@@ -51,7 +51,6 @@ export default function ReaderNote({
     return colors[color] || 'reader-note-yellow';
   };
 
-  // Цитата
   if (type === 'quote') {
     return (
       <div 
@@ -78,7 +77,6 @@ export default function ReaderNote({
     );
   }
   
-  // Заметка
   return (
     <div 
       className={`reader-note-card reader-note-${getBorderColorClass()}`}

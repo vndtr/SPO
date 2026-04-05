@@ -2,6 +2,7 @@ from fastapi import WebSocket
 from typing import Dict, List, Any
 
 notification_connections = {}
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[int, List[WebSocket]] = {}

@@ -16,8 +16,7 @@ async def add_session_note(
     db: AsyncSession = Depends(get_session)
 ):
     result = await crud.create_session_note(request.state.user.id, session_note, db)
-    
-    # Отправляем WebSocket только для публичных заметок
+    # Отправляем вебсокет только для публичных заметок
     if not session_note.is_private:
         await manager.broadcast(
             session_id=session_note.session_id,
@@ -28,7 +27,6 @@ async def add_session_note(
                 "action": "reload"
             }
         )
-    
     return result
 
 @session_note_router.post('/update')
@@ -38,8 +36,7 @@ async def update_session_note(
     db: AsyncSession = Depends(get_session)
 ):
     result = await crud.update_session_note(request.state.user.id, session_note, db)
-    
-    # Получаем оригинальную заметку чтобы узнать is_private
+    # Получаем оригинальную заметку чтобы узнать, публичная она или нет
     from sqlalchemy import select
     stmt = select(models.Session_Note).where(models.Session_Note.id == session_note.id)
     db_note = (await db.execute(stmt)).scalar_one_or_none()
@@ -53,8 +50,7 @@ async def update_session_note(
                 "session_id": session_note.session_id,
                 "action": "reload"
             }
-        )
-    
+        ) 
     return result
 
 @session_note_router.post('/delete')
@@ -68,7 +64,6 @@ async def delete_session_note(
     stmt = select(models.Session_Note).where(models.Session_Note.id == session_note.id)
     db_note = (await db.execute(stmt)).scalar_one_or_none()
     is_public = db_note and not db_note.is_private if db_note else False
-    
     result = await crud.delete_session_note(request.state.user.id, session_note, db)
     
     if is_public:
@@ -81,7 +76,6 @@ async def delete_session_note(
                 "action": "reload"
             }
         )
-    
     return result
 
 @session_note_router.get('/')
@@ -95,8 +89,7 @@ async def get_session_notes(
     
     my_notes, public_notes = await crud.get_session_notes_by_session_user_id(
         request.state.user.id, session_id, db
-    )
-    
+    ) 
     result = []
     seen_ids = set()
     
@@ -118,7 +111,6 @@ async def get_session_notes(
                 "created_at": str(note.created_at) if hasattr(note, 'created_at') else None
             })
             seen_ids.add(note.id)
-    
     for note in public_notes:
         if note.id in seen_ids:
             continue
@@ -137,6 +129,5 @@ async def get_session_notes(
                 "author_name": user.name if user else "Пользователь",
                 "author_role": "teacher" if participant.role_id == 2 else "student",
                 "created_at": str(note.created_at) if hasattr(note, 'created_at') else None
-            })
-    
+            }) 
     return result

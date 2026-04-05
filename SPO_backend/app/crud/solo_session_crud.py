@@ -1,5 +1,4 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import models, schemas
 from sqlalchemy import select, func, cast, Float, insert
 from sqlalchemy.orm import selectinload
@@ -11,7 +10,6 @@ from passlib.context import CryptContext
 import uuid
 
 # Solo_Session
-
 async def create_solo_session(user:models.User, book_id:int,db:AsyncSession = Depends(get_session)):
     user = await db.get(models.User, user.id)
     if not user:
@@ -60,13 +58,10 @@ async def update_solo_session_note(
     db_note = await db.get(models.Solo_Note, note.id)
     if not db_note:
         raise HTTPException(status_code=404, detail="Note not found")
-    
     # Проверяем права доступа
     solo_session = await db.get(models.Solo_Session, db_note.solo_session_id)
     if not solo_session or solo_session.user_id != user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
-    # Обновляем поля
     if note.comment is not None:
         db_note.comment = note.comment
     if note.color is not None:

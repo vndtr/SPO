@@ -19,7 +19,6 @@ class Session_Note(Base):
     end_index:Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at:Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
-    
     answers: Mapped[List["Answer"]] = relationship("Answer", back_populates="note", cascade="all, delete-orphan")
     participant: Mapped["Session_Participant"] = relationship(
         "Session_Participant",

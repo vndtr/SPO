@@ -128,7 +128,7 @@ async def upload_book_to_minio(file: UploadFile = File(...)) -> str:
             file_obj,
             length=len(json_bytes),
         )
-        return json_filename  # возвращаем имя JSON файла
+        return json_filename  
 
     except HTTPException:
         raise

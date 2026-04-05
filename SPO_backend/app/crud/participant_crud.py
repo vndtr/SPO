@@ -1,5 +1,4 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import models, schemas
 from sqlalchemy import select, func, cast, Float, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,3 +1,4 @@
+# app/crud.py
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 import models, schemas
@@ -6,11 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, Depends
 from deps import get_session
-
-
-
 # solosession quote 
-
 
 async def get_solo_session_quotes_by_solo_session_id(
         user_id:int,
@@ -26,8 +23,6 @@ async def get_solo_session_quotes_by_solo_session_id(
     q = select(models.Solo_Quote).where(models.Solo_Quote.solo_session_id == solo_session_id)
     result = (await db.execute(q)).scalars().all()
     return result
-
-
 
 async def create_solo_session_quote(
         user_id:int,

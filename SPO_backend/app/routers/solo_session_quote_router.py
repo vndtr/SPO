@@ -8,7 +8,6 @@ from .auth_router import get_current_user
 
 solo_session_quote_router = APIRouter(prefix="/solo_session/quote", tags=["solo_session_quote"])
 
-
 @solo_session_quote_router.get('/{solo_session_id}')
 async def get_session_quotes(
         request:Request,
@@ -18,7 +17,6 @@ async def get_session_quotes(
         raise HTTPException(status_code=422,detail="solo_session_id must be provided")
     else:
         return await crud.get_solo_session_quotes_by_solo_session_id(request.state.user.id, solo_session_id, db)
-
 
 @solo_session_quote_router.post('/')
 async def add_session_quote(

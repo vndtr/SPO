@@ -485,7 +485,7 @@ export default function SessionReaderView() {
       return;
     }
     
-    const ws = new WebSocket(`ws://localhost:5001/ws/session/${session.id}?token=${encodeURIComponent(token)}`);
+    const ws = new WebSocket(`ws://localhost:5000/ws/session/${session.id}?token=${encodeURIComponent(token)}`);
     
     ws.onopen = () => {
       console.log('WebSocket connected');

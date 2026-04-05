@@ -9,7 +9,6 @@ export default function ProfileCard() {
     email: ''
   });
 
-  // Загружаем сохраненные данные 
   useEffect(() => {
     const savedData = localStorage.getItem('profileData');
     if (savedData) {

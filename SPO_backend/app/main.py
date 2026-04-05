@@ -24,12 +24,11 @@ app.add_middleware(AuthMiddleware)
 
 app.add_middleware(
      CORSMiddleware,
-     allow_origins=["http://localhost:5173", "http://localhost:5001"],
+     allow_origins=["http://localhost:5173", "http://localhost:5000"],
      allow_credentials=True,
      allow_methods=["*"],
      allow_headers=["*"],
  )
-
 
 
 app.include_router(minio_api.minio_router)
@@ -69,7 +68,6 @@ async def on_startup():
             # Ждём перед следующей попыткой (экспоненциальный бэкофф)
             await asyncio.sleep(delay)
             delay = min(delay * 2, max_delay)
-
 
 
 

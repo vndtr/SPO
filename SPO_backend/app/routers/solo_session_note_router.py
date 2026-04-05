@@ -8,7 +8,6 @@ from .auth_router import get_current_user
 
 solo_session_note_router = APIRouter(prefix="/solo_session/note", tags=["solo_session_note"] )
 
-
 @solo_session_note_router.get('/{solo_session_id}')
 async def get_session_notes(
         request:Request,
@@ -35,14 +34,12 @@ async def add_session_note(
     db:AsyncSession = Depends(get_session)):
     return await crud.create_solo_session_note(request.state.user.id, solo_session_note, db)
 
-
 @solo_session_note_router.patch('/')
 async def update_session_note(
     solo_session_note:schemas.SoloSessionNoteUpdate,
     request:Request,
     db:AsyncSession = Depends(get_session)):
     return await crud.update_solo_session_note(request.state.user.id, solo_session_note, db)
-
 
 @solo_session_note_router.delete('/')
 async def delete_session_note(
