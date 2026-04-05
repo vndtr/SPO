@@ -1,4 +1,3 @@
-// frontend/src/pages/LibraryView.jsx
 import React, { useState, useEffect } from 'react';
 import Header from '../components/mainComps/Header.jsx';
 import NavAside from '../components/mainComps/NavAside.jsx';
@@ -12,6 +11,7 @@ export default function LibraryView() {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState('asc'); 
 
   useEffect(() => {
     loadCurrentUser();
@@ -35,13 +35,25 @@ export default function LibraryView() {
       setAuthLoading(false);
     }
   };
+const sortBooks = (booksList, order) => {
+    return [...booksList].sort((a, b) => {
+      if (order === 'asc') {
+        return a.title.localeCompare(b.title, 'ru');
+      } else {
+        return b.title.localeCompare(a.title, 'ru');
+      }
+    });
+  };
 
-  const loadBooks = async () => {
+  const handleSortChange = (order) => {
+    setSortOrder(order);
+    setBooks(sortBooks(books, order));
+  };
+
+    const loadBooks = async () => {
     try {
       setLoading(true);
       const data = await getBooks();
-      console.log('Books loaded:', data);
-      // Адаптируем данные под формат, ожидаемый LibraryBook
       const adaptedBooks = data.map(book => ({
         id: book.id,
         title: book.title,
@@ -50,7 +62,8 @@ export default function LibraryView() {
         coverImage: book.cover_img || '',
         coverColor: 'bg-blue-300'
       }));
-      setBooks(adaptedBooks);
+      const sortedBooks = sortBooks(adaptedBooks, sortOrder);
+      setBooks(sortedBooks);
     } catch (error) {
       console.error('Error loading books:', error);
     } finally {
@@ -137,25 +150,51 @@ export default function LibraryView() {
       <div className='flex'>
         <NavAside />
         <div className='bg-beige-1 flex flex-col text-accent-2 w-screen p-10'>
-          <div className='flex justify-between'>
+          <div className='flex justify-between items-center'>
             <div>
               <h2 className='text-blue text-3xl mb-4'>Моя библиотека</h2>
               <h3>Ваши книги для личного и совместного просмотра</h3>
             </div>
             
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className='relative bg-accent-1 text-beige-1 rounded-xl h-fit py-4 px-8 pl-10 cursor-pointer'
-              disabled={loading}
-            >
-              Загрузить книгу
-              <svg className='absolute ml-2 left-3 top-1/2 -translate-y-1/2 w-5 h-5' 
-                   xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-              </svg>
-            </button>
-          </div>
-
+            <div className="flex gap-4">
+              {/* Сортировка */}
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-gray-600">Сортировать:</span>
+                <button
+                  onClick={() => handleSortChange('asc')}
+                  className={`px-3 py-2 rounded-xl transition-colors ${
+                    sortOrder === 'asc' 
+                      ? 'bg-accent-1 text-beige-1' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  А → Я
+                </button>
+                <button
+                  onClick={() => handleSortChange('desc')}
+                  className={`px-3 py-2 rounded-xl transition-colors ${
+                    sortOrder === 'desc' 
+                      ? 'bg-accent-1 text-beige-1' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Я → А
+                </button>
+              </div>
+              
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className='relative bg-accent-1 text-beige-1 rounded-xl h-fit py-4 px-8 pl-10 cursor-pointer'
+                disabled={loading}
+              >
+                Загрузить книгу
+                <svg className='absolute ml-2 left-3 top-1/2 -translate-y-1/2 w-5 h-5' 
+                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                </svg>
+              </button>
+            </div>
+ </div>
           {loading && <div className="text-center py-10">Загрузка...</div>}
 
           {!loading && books.length === 0 && (
