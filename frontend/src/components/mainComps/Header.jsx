@@ -17,6 +17,7 @@ export default function Header() {
         performSearch();
       } else {
         setSearchResults({ books: [], sessions: [] });
+        setShowResults(false);
       }
     }, 500);
 
@@ -24,27 +25,29 @@ export default function Header() {
   }, [searchQuery]);
 
   const performSearch = async () => {
+    console.log('performSearch called with query:', searchQuery);
     if (!searchQuery.trim()) return;
     
     setLoading(true);
     try {
-      const results = await searchAll(searchQuery);
-      setSearchResults(results);
-      setShowResults(true);
+        const results = await searchAll(searchQuery);
+        console.log('Search results:', results);
+        setSearchResults(results);
+        setShowResults(true);
     } catch (error) {
-      console.error('Search error:', error);
+        console.error('Search error:', error);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
-  const handleResultClick = (result) => {
+  const handleResultClick = (result, type) => {
     setShowResults(false);
     setSearchQuery('');
     
-    if (result.type === 'book') {
+    if (type === 'book') {
       navigate(`/reader?bookId=${result.id}&title=${encodeURIComponent(result.title)}&author=${encodeURIComponent(result.author)}`);
-    } else if (result.type === 'session') {
+    } else if (type === 'session') {
       navigate(`/session-reader?sessionId=${result.id}&name=${encodeURIComponent(result.name)}`);
     }
   };
@@ -70,6 +73,7 @@ export default function Header() {
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
           >
+            {/* SVG логотип */}
             <g>
               <path d="M.45,113.21c3.55,2.61,50.38,3.65,71.89-6.55,21.75-10.32,32.74-22.84,52.74-27.27,33.59-7.43,65.4,13.4,62,12.53-7.53-1.94-27.07-9.66-58.34.83-14.31,4.8-18.48,7.51-35.06,17.37-21.2,12.6-31.33,15.23-51.12,16.05-23.08.96-46.08-15.88-42.1-12.95Z"/>
               <path d="M94.12,126.97c3.55,2.61,50.38,3.65,71.89-6.55,21.75-10.32,32.74-22.84,52.74-27.27,33.59-7.43,65.4,13.4,62,12.53-7.53-1.94-27.07-9.66-58.34.83-14.31,4.8-18.48,7.51-35.06,17.37-21.2,12.6-31.33,15.23-51.12,16.05-23.08.96-46.08-15.88-42.1-12.95Z"/>
@@ -101,45 +105,59 @@ export default function Header() {
             className='absolute inset-y-0 w-full pl-10 pr-3 m-5 rounded-3xl bg-beige-1 focus:outline-none focus:ring-2 focus:ring-accent-1'
           />
           
-          {showResults && (searchResults.books?.length > 0 || searchResults.sessions?.length > 0) && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-beige-1 rounded-xl shadow-lg border border-accent-1 z-50 max-h-96 overflow-y-auto">
-              {searchResults.sessions?.length > 0 && (
-                <div className="p-2">
-                  <div className="px-3 py-2 text-sm font-semibold text-accent-1 border-b border-accent-1/30">
-                    Сессии
-                  </div>
-                  {searchResults.sessions.map((session) => (
-                    <div
-                      key={`session-${session.id}`}
-                      className="px-3 py-2 hover:bg-accent-1/10 cursor-pointer rounded-lg transition-colors"
-                      onClick={() => handleResultClick({ ...session, type: 'session' })}
-                    >
-                      <div className="font-medium">{session.name}</div>
-                      <div className="text-xs text-gray-500">Сессия</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {searchResults.books?.length > 0 && (
-                <div className="p-2">
-                  <div className="px-3 py-2 text-sm font-semibold text-accent-1 border-b border-accent-1/30">
-                    Книги
-                  </div>
-                  {searchResults.books.map((book) => (
-                    <div
-                      key={`book-${book.id}`}
-                      className="px-3 py-2 hover:bg-accent-1/10 cursor-pointer rounded-lg transition-colors"
-                      onClick={() => handleResultClick({ ...book, type: 'book' })}
-                    >
-                      <div className="font-medium">{book.title}</div>
-                      <div className="text-xs text-gray-500">{book.author}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {showResults && (
+  <div className="absolute top-full left-0 right-0 mt-2 bg-beige-1 rounded-xl shadow-lg border border-accent-1 z-50 max-h-96 overflow-y-auto">
+    {(searchResults.books?.length === 0 && searchResults.sessions?.length === 0) ? (
+      <div className="p-4 text-center text-gray-500">
+        <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <p>Ничего не найдено</p>
+        <p className="text-xs mt-1">Попробуйте изменить поисковый запрос</p>
+      </div>
+    ) : (
+      <>
+        {searchResults.sessions?.length > 0 && (
+          <div className="p-2">
+            <div className="px-3 py-2 text-sm font-semibold text-accent-1 border-b border-accent-1/30">
+              Сессии ({searchResults.sessions.length})
             </div>
-          )}
+            {searchResults.sessions.map((session) => (
+              <div
+                key={`session-${session.id}`}
+                className="px-3 py-2 hover:bg-accent-1/10 cursor-pointer rounded-lg transition-colors"
+                onClick={() => handleResultClick(session, 'session')}
+              >
+                <div className="font-medium">{session.name}</div>
+                <div className="text-xs text-gray-500">Сессия</div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {searchResults.books?.length > 0 && (
+          <div className="p-2">
+            <div className="px-3 py-2 text-sm font-semibold text-accent-1 border-b border-accent-1/30">
+              Книги ({searchResults.books.length})
+            </div>
+            {searchResults.books.map((book) => (
+              <div
+                key={`book-${book.id}`}
+                className="px-3 py-2 hover:bg-accent-1/10 cursor-pointer rounded-lg transition-colors"
+                onClick={() => handleResultClick(book, 'book')}
+              >
+                <div className="font-medium">{book.title}</div>
+                <div className="text-xs text-gray-500">{book.author}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    )}
+  </div>
+)}
+              
+             
           
           {loading && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-beige-1 rounded-xl shadow-lg border border-accent-1 z-50 p-4 text-center">

@@ -429,25 +429,31 @@ export const updateUserProfile = async (userData) => {
 };
 
 // ==================== ПОИСК (временное решение) ====================
-// TODO: добавить эндпоинты поиска в бэкенд
+// frontend/src/services/api.js
 
 export const searchBooks = async (query) => {
-  // Временное решение — фильтруем книги на фронтенде
+  console.log('searchBooks called with query:', query);
   const books = await getBooks();
+  console.log('All books:', books);
   const lowerQuery = query.toLowerCase();
-  return books.filter(book => 
+  const filtered = books.filter(book => 
     book.title.toLowerCase().includes(lowerQuery) || 
     book.author.toLowerCase().includes(lowerQuery)
   );
+  console.log('Filtered books:', filtered);
+  return filtered;
 };
 
 export const searchSessions = async (query) => {
-  // Временное решение — фильтруем сессии на фронтенде
+  console.log('searchSessions called with query:', query);
   const sessions = await getSessions();
+  console.log('All sessions:', sessions);
   const lowerQuery = query.toLowerCase();
-  return sessions.filter(session => 
+  const filtered = sessions.filter(session => 
     session.name.toLowerCase().includes(lowerQuery)
   );
+  console.log('Filtered sessions:', filtered);
+  return filtered;
 };
 
 export const searchAll = async (query) => {
