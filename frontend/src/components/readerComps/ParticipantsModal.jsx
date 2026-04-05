@@ -51,10 +51,21 @@ export default function ParticipantsModal({ sessionId, currentUserId, onClose })
         return true;
     };
 
-    // Простое закрытие без лишних вызовов
-    const handleClose = () => {
-        onClose();
-    };
+    
+const handleClose = () => {
+    if (window.preserveHighlights) {
+        window.preserveHighlights();
+    }
+    onClose();
+    setTimeout(() => {
+        if (window.restoreHighlights) {
+            window.restoreHighlights();
+        }
+        if (window.refreshAllHighlights) {
+            window.refreshAllHighlights();
+        }
+    }, 50);
+};
 
     return (
         <div 

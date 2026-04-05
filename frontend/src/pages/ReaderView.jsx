@@ -17,8 +17,8 @@ import {
   deleteSoloNote,
   deleteSoloQuote,
   updateSoloNote,
-  getReaderSettings,
-  updateReaderSettings
+  getUserSettings,
+  updateUserSettings
 } from '../services/api';
 
 export default function ReaderView() {
@@ -48,19 +48,19 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
 
   const loadCurrentUser = async () => {
     try {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-      if (user) {
-        await loadSettings();
-      }
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+        if (user) {
+            await loadSettings(); // Загружаем настройки из БД после получения пользователя
+        }
     } catch (error) {
-      console.error('Error loading user:', error);
+        console.error('Error loading user:', error);
     }
-  };
+};
 
   const loadSettings = async () => {
     try {
-      const settings = await getReaderSettings();
+      const settings = await getUserSettings();
       setReaderSettings(settings);
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -91,9 +91,20 @@ const [editingAnnotation, setEditingAnnotation] = useState(null);
     }
   };
 
+  useEffect(() => {
+    const handleSettingsChange = (event) => {
+        if (event.detail) {
+            setReaderSettings(event.detail);
+        }
+    };
+    
+    window.addEventListener('settingsChanged', handleSettingsChange);
+    return () => window.removeEventListener('settingsChanged', handleSettingsChange);
+}, []);
+
   const handleSettingsChange = async (newSettings) => {
     try {
-      await updateReaderSettings(newSettings);
+      await updateUserSettings(newSettings);
       setReaderSettings(newSettings);
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -314,12 +325,12 @@ const handleEditNote = async (color, comment) => {
     <div className='relative h-screen flex flex-col'>
       <ReaderHeader 
         isSession={false} 
-        onSettingsClick={() => setShowSettingsModal(true)}
-        onToggleSidebar={handleToggleSidebar}
-        isSidebarOpen={isSidebarOpen}
-        bookTitle={bookTitle}
-        bookAuthor={bookAuthor}
-        backgroundColor={readerSettings?.background_color === 'dark' ? '#1a1a1a' : '#fdf8f2'}
+    onSettingsClick={() => setShowSettingsModal(true)}
+    onToggleSidebar={handleToggleSidebar}
+    isSidebarOpen={isSidebarOpen}
+    bookTitle={bookTitle}
+    bookAuthor={bookAuthor}
+    globalSettings={readerSettings}
       />
       
       <div className='flex flex-1 min-h-0'>
@@ -337,8 +348,15 @@ const handleEditNote = async (color, comment) => {
           />
         )}
 
-        <main className="bg-beige-1 flex-1 p-10 overflow-y-auto">
-          {bookId && soloSession ? (
+        <main 
+    className="flex-1 p-10 overflow-y-auto" 
+    style={{ 
+        backgroundColor: readerSettings?.background_color === 'dark' ? '#2a2a2a' 
+            : readerSettings?.background_color === 'beige' ? '#f5f0e8' 
+            : '#ffffff'
+    }}
+>
+    {bookId && soloSession ? (
             <ErrorBoundary>
               <BookReader 
                 bookId={bookId}
@@ -346,6 +364,7 @@ const handleEditNote = async (color, comment) => {
                 onTextSelected={handleTextSelected}
                 onAnnotationClick={handleAnnotationClick}
                 settings={readerSettings}
+                currentUser={currentUser}
               />
             </ErrorBoundary>
           ) : (

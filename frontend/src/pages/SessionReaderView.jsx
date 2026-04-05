@@ -7,6 +7,7 @@ import BookReader from '../utils/BookReader.jsx';
 import ErrorBoundary from '../components/UI/ErrorBoundary.jsx';
 import ParticipantsModal from '../components/readerComps/ParticipantsModal.jsx';
 import SessionReaderModal from '../components/readerComps/SessionReaderModal.jsx';
+import ReaderSettingsModal from '../components/readerComps/ReaderSettingsModal.jsx';
 import { 
   getCurrentUser,
   getSessionById,
@@ -18,7 +19,9 @@ import {
   createAnswer,
   getSessionParticipants,
   joinSessionByLink,
-  getSessionAnnotations
+  getSessionAnnotations,
+   getUserSettings,
+    updateUserSettings 
 } from '../services/api';
 
 export default function SessionReaderView() {
@@ -38,7 +41,9 @@ export default function SessionReaderView() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [readerSettings, setReaderSettings] = useState(null);
   const [showParticipants, setShowParticipants] = useState(false);
+const [showSettingsModal, setShowSettingsModal] = useState(false);
   const menuRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -113,6 +118,32 @@ export default function SessionReaderView() {
     });
     setShowMenu(true);
   };
+
+  const loadSettings = async () => {
+    try {
+        const settings = await getUserSettings();
+        setReaderSettings(settings);
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+};
+
+useEffect(() => {
+    if (currentUser) {
+        loadSettings();
+    }
+}, [currentUser]);
+
+useEffect(() => {
+    const handleSettingsChange = (event) => {
+        if (event.detail) {
+            setReaderSettings(event.detail);
+        }
+    };
+    
+    window.addEventListener('settingsChanged', handleSettingsChange);
+    return () => window.removeEventListener('settingsChanged', handleSettingsChange);
+}, []);
 
   const handleQuote = async (color) => {
     
@@ -206,6 +237,10 @@ export default function SessionReaderView() {
     setShowMenu(false);
     setPendingSelection(null);
   };
+
+  const handleSettingsApplied = (newSettings) => {
+    setReaderSettings(newSettings);
+};
 
   const openEditModal = (id, type, currentColor, currentComment, selectedText, currentVisibility, startIndex, endIndex) => {
   if (type !== 'note') {
@@ -477,6 +512,8 @@ useEffect(() => {
     sessionId={session.id}
     currentUserId={currentUser?.user_id}
     onShowParticipants={handleShowParticipants}
+    globalSettings={readerSettings} 
+    onSettingsClick={() => setShowSettingsModal(true)} 
       />
       
       <div className='flex flex-1 min-h-0'>
@@ -496,7 +533,14 @@ useEffect(() => {
           />
         )}
 
-        <main className="bg-beige-1 flex-1 p-10 overflow-y-auto">
+    <main 
+    className="flex-1  p-10 overflow-y-auto" 
+    style={{ 
+        backgroundColor: readerSettings?.background_color === 'dark' ? '#2a2a2a' 
+            : readerSettings?.background_color === 'beige' ? '#f5f0e8' 
+            : '#ffffff'
+    }}
+>
           <ErrorBoundary>
             <BookReader 
               bookId={session.book_id}
@@ -504,7 +548,7 @@ useEffect(() => {
               sessionId={session.id}
               onTextSelected={handleTextSelected}
               onAnnotationClick={handleAnnotationClick}
-              settings={null}
+               settings={readerSettings}
               currentUser={currentUser}
             />
           </ErrorBoundary>
@@ -562,6 +606,12 @@ useEffect(() => {
                 }
             }, 50);
         }}
+    />
+)}
+{showSettingsModal && (
+    <ReaderSettingsModal
+        onClose={() => setShowSettingsModal(false)}
+        onSettingsApplied={handleSettingsApplied}
     />
 )}
     </div>

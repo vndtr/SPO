@@ -8,13 +8,21 @@ export default function ReaderHeader({
   isSidebarOpen = true,
   bookTitle = "Мастер и Маргарита",
   bookAuthor = "",
-  backgroundColor = '#fdf8f2',
   sessionId = null,
   currentUserId = null,
-  onShowParticipants = null
+  onShowParticipants = null,
+  globalSettings = { font_size: 14, background_color: 'light' }
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Вычисляем цвет фона на основе глобальных настроек
+const bgColors = {
+    light: '#ffffff',
+    dark: '#2a2a2a',
+    beige: '#f5f0e8'
+};
+const currentBgColor = bgColors[globalSettings.background_color] || '#f5f0e8';
 
   const handleParticipantsClick = () => {
     setModalOpen(false);
@@ -34,12 +42,10 @@ export default function ReaderHeader({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
-        // Сохраняем подсветки перед закрытием
         if (window.preserveHighlights) {
           window.preserveHighlights();
         }
         setModalOpen(false);
-        // Восстанавливаем подсветки после закрытия
         setTimeout(() => {
           if (window.restoreHighlights) {
             window.restoreHighlights();
@@ -69,7 +75,7 @@ export default function ReaderHeader({
         <div 
           className='max-w-[30vw] min-w-[15vw] flex justify-center items-center transition-colors duration-300'
           style={{ 
-            backgroundColor: isSidebarOpen ? '#3b3b3b' : backgroundColor,
+            backgroundColor: isSidebarOpen ? '#3b3b3b' : currentBgColor,
           }}
         >
           <Link to='/'>
@@ -91,7 +97,7 @@ export default function ReaderHeader({
 
         <div 
           className='w-screen flex justify-between border-b border-accent-1'
-          style={{ backgroundColor: backgroundColor }}
+          style={{ backgroundColor: currentBgColor }}
         >
           <div className='w-full max-w-lg my-6 flex items-center ml-10 text-3xl'>
             <h2 style={{ color: '#374151' }}>
@@ -102,7 +108,7 @@ export default function ReaderHeader({
 
           <div 
             className='flex p-4 m-10 mr-0 gap-4 border-l border-t border-b rounded-2xl rounded-tr-none rounded-br-none'
-            style={{ backgroundColor: backgroundColor, borderColor: '#ef4444', borderWidth: '1px' }}
+            style={{ backgroundColor: currentBgColor, borderColor: '#ef4444', borderWidth: '1px' }}
           >
             {onToggleSidebar && (
               <button onClick={onToggleSidebar} className='hover:cursor-pointer' style={{ color: '#374151' }} title={isSidebarOpen ? "Скрыть боковую панель" : "Показать боковую панель"}>

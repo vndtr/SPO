@@ -11,6 +11,7 @@ export default function BookReader({
   settings,
   currentUser,
 }) {
+  console.log('BookReader mounted with settings:', settings);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [content, setContent] = useState('');
@@ -120,18 +121,24 @@ export default function BookReader({
         span.className = 'highlighted-quote';
         span.style.backgroundColor = getQuoteColor(annotation.color);
       } else {
-        const authorId = annotation.author_id || annotation.author?.id;
-        const isOwn = authorId === currentUser?.user_id;
+        let isOwn = false;
+  if (soloSessionId) {
+    isOwn = true; // В личном чтении все заметки принадлежат текущему пользовате
         
-        if (isOwn) {
-          span.className = 'highlighted-note';
-          span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
-        } else {
-          span.className = 'highlighted-note-other';
-          span.style.borderBottom = '2px dashed #9ca3af';
-          span.style.paddingBottom = '2px';
-        }
-      }
+         } else if (sessionId) {
+    const authorId = annotation.author_id || annotation.author?.id;
+    isOwn = authorId === currentUser?.user_id;
+  }
+  
+  if (isOwn) {
+    span.className = 'highlighted-note';
+    span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
+  } else {
+    span.className = 'highlighted-note-other';
+    span.style.borderBottom = '2px dashed #9ca3af';
+    span.style.paddingBottom = '2px';
+  }
+}
       
       span.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -182,31 +189,49 @@ export default function BookReader({
 
   const loadPage = async (page) => {
     try {
-      setLoading(true);
-      const data = await getBookPage(bookId, page);
-      
-      setContent(data.content);
-      setFullText(data.full_text || '');
-      setPageStartIndex(data.start_index || 0);
-      setTotalPages(data.total_pages || 1);
-      setCurrentPage(page);
-      
-      localStorage.setItem(`book_${bookId}_page`, page);
-      
-      const allAnnotations = await loadAnnotationsForPage();
-      
-      const pageAnnotations = allAnnotations.filter(ann => 
-        ann.start_index >= data.start_index && ann.end_index <= data.end_index
-      );
-      
-      setAnnotations(pageAnnotations);
-      
+        setLoading(true);
+        const data = await getBookPage(bookId, page);
+        
+        setContent(data.content);
+        setFullText(data.full_text || '');
+        setPageStartIndex(data.start_index || 0);
+        setTotalPages(data.total_pages || 1);
+        setCurrentPage(page);
+        
+        localStorage.setItem(`book_${bookId}_page`, page);
+        
+        const allAnnotations = await loadAnnotationsForPage();
+        
+        const pageAnnotations = allAnnotations.filter(ann => 
+            ann.start_index >= data.start_index && ann.end_index <= data.end_index
+        );
+        
+        setAnnotations(pageAnnotations);
+        
+        // Применяем настройки после загрузки контента
+        setTimeout(() => {
+            if (containerRef.current && settings) {
+                const fontSizeMap = { 12: '12px', 14: '14px', 16: '16px', 18: '18px' };
+                const fontSizeValue = typeof settings.font_size === 'string' ? parseInt(settings.font_size) : settings.font_size;
+                const fontSize = fontSizeMap[fontSizeValue] || '14px';
+                
+                const textColors = { light: '#374151', dark: '#e0e0e0', beige: '#4a4a4a' };
+                const textColor = textColors[settings.background_color] || '#374151';
+                
+                const paragraphs = containerRef.current.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    p.style.fontSize = fontSize;
+                    p.style.color = textColor;
+                });
+            }
+        }, 100);
+        
     } catch (err) {
-      console.error('Error loading page:', err);
+        console.error('Error loading page:', err);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   useEffect(() => {
     if (content && !loading) {
@@ -379,17 +404,23 @@ export default function BookReader({
           span.style.backgroundColor = getQuoteColor(annotation.color);
         } else {
           const authorId = annotation.author_id || annotation.author?.id;
-          const isOwn = authorId === currentUser?.user_id;
+          let isOwn = false;
+if (soloSessionId) {
+  isOwn = true; // В личном чтении все заметки свои
+} else if (sessionId) {
+  const authorId = annotation.author_id || annotation.author?.id;
+  isOwn = authorId === currentUser?.user_id;
+}
           
           if (isOwn) {
-            span.className = 'highlighted-note';
-            span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
-          } else {
-            span.className = 'highlighted-note-other';
-            span.style.borderBottom = '2px dashed #9ca3af';
-            span.style.paddingBottom = '2px';
-          }
-        }
+    span.className = 'highlighted-note';
+    span.style.borderBottom = `3px solid ${getNoteColor(annotation.color)}`;
+  } else {
+    span.className = 'highlighted-note-other';
+    span.style.borderBottom = '2px dashed #9ca3af';
+    span.style.paddingBottom = '2px';
+  }
+}
         
         span.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -510,48 +541,172 @@ export default function BookReader({
       observer.disconnect();
     };
   }, [totalPages, currentPage, annotations, content, loading, pageStartIndex, fullText, currentUser, onAnnotationClick]);
-
-  useEffect(() => {
-    if (containerRef.current && settings) {
-      const fontSizes = {
-        small: '0.875rem',
-        medium: '1rem',
-        large: '1.125rem',
-        'extra-large': '1.25rem'
-      };
-      containerRef.current.style.fontSize = fontSizes[settings.font_size] || '1rem';
-      
-      const bgColors = {
-        light: '#ffffff',
-        dark: '#1a1a1a',
-        beige: '#fdf8f2'
-      };
-      containerRef.current.style.backgroundColor = bgColors[settings.background_color] || '#ffffff';
-      containerRef.current.style.color = settings.background_color === 'dark' ? '#e5e5e5' : '#374151';
+// Применяем настройки после загрузки контента (когда появляются параграфы)
+useEffect(() => {
+    if (content && containerRef.current && settings) {
+        const fontSizeMap = {
+            12: '12px',
+            14: '14px',
+            16: '16px',
+            18: '18px'
+        };
+        
+        const fontSizeValue = typeof settings.font_size === 'string' 
+            ? parseInt(settings.font_size) 
+            : settings.font_size;
+        const fontSize = fontSizeMap[fontSizeValue] || '14px';
+        
+        const textColors = {
+            light: '#374151',
+            dark: '#e0e0e0',
+            beige: '#4a4a4a'
+        };
+        const textColor = textColors[settings.background_color] || '#374151';
+        
+        // Применяем ко всем элементам
+        const allElements = containerRef.current.querySelectorAll('*');
+        allElements.forEach(el => {
+            el.style.fontSize = fontSize;
+            el.style.color = textColor;
+        });
+        
+        // Специально для параграфов
+        const paragraphs = containerRef.current.querySelectorAll('p');
+        paragraphs.forEach(p => {
+            p.style.fontSize = fontSize;
+            p.style.color = textColor;
+        });
+        
+        console.log('Applied font size after content load:', fontSize);
     }
-  }, [settings]);
+}, [content, settings]);
+ useEffect(() => {
+    if (containerRef.current && settings) {
+        // Сохраняем все текущие подсветки перед изменением
+        const saveCurrentHighlights = () => {
+            const allSpans = document.querySelectorAll('span[data-annotation-id]');
+            const savedData = [];
+            allSpans.forEach(span => {
+                savedData.push({
+                    id: span.id,
+                    html: span.outerHTML,
+                    parent: span.parentNode,
+                    nextSibling: span.nextSibling
+                });
+            });
+            return savedData;
+        };
+        
+        // Восстанавливаем подсветки после изменения
+        const restoreHighlights = (savedData) => {
+            savedData.forEach(data => {
+                const existingSpan = document.getElementById(data.id);
+                if (!existingSpan && data.parent && data.parent.parentNode) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.html;
+                    const newSpan = tempDiv.firstChild;
+                    if (newSpan && data.nextSibling) {
+                        data.parent.insertBefore(newSpan, data.nextSibling);
+                    } else if (newSpan && data.parent) {
+                        data.parent.appendChild(newSpan);
+                    }
+                }
+            });
+        };
+        
+        // Сохраняем текущие подсветки
+        const savedHighlights = saveCurrentHighlights();
+        
+        // Применяем новые настройки
+        const fontSizeMap = {
+            12: '12px',
+            14: '14px',
+            16: '16px',
+            18: '18px'
+        };
+
+        // Преобразуем в число, если пришло строкой
+const fontSizeValue = typeof settings.font_size === 'string' 
+    ? parseInt(settings.font_size) 
+    : settings.font_size;
+        const fontSize = fontSizeMap[fontSizeValue] || '14px';
+        
+        const bgColors = {
+            light: '#ffffff',
+            dark: '#2a2a2a',
+            beige: '#f5f0e8'
+        };
+        const textColors = {
+            light: '#374151',
+            dark: '#e0e0e0',
+            beige: '#4a4a4a'
+        };
+        
+        const bgColor = bgColors[settings.background_color] || '#ffffff';
+        const textColor = textColors[settings.background_color] || '#374151';
+        
+        // Применяем к контейнеру
+        containerRef.current.style.backgroundColor = bgColor;
+        containerRef.current.style.fontSize = fontSize;
+        
+        // Применяем ко всем дочерним элементам
+        const allElements = containerRef.current.querySelectorAll('*');
+        allElements.forEach(el => {
+            el.style.fontSize = fontSize;
+            el.style.color = textColor;
+        });
+        
+        // Восстанавливаем подсветки после применения стилей
+        setTimeout(() => {
+            restoreHighlights(savedHighlights);
+            // Дополнительно перерисовываем на всякий случай
+            if (window.refreshAllHighlights) {
+                window.refreshAllHighlights();
+            }
+        }, 50);
+    }
+}, [settings]);
 
   if (loading) return <div className="p-10 text-center">Загрузка...</div>;
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-4 bg-beige-2">
-        <span>Страница {currentPage + 1} из {totalPages}</span>
+      <div 
+    className="flex justify-between items-center p-4 border-b" 
+    style={{ 
+        backgroundColor: settings?.background_color === 'dark' ? '#2a2a2a' 
+            : settings?.background_color === 'beige' ? '#f5f0e8' 
+            : '#ffffff',
+        color: settings?.background_color === 'dark' ? '#e0e0e0' : '#374151',
+        borderBottomColor: settings?.background_color === 'dark' ? '#4a4a4a' : '#e5e7eb'
+    }}
+>
+        <span style={{ color: settings?.background_color === 'dark' ? '#e0e0e0' : '#374151' }}>
+    Страница {currentPage + 1} из {totalPages}
+</span>
         <div className="space-x-2">
           <button 
-            onClick={() => loadPage(currentPage - 1)} 
-            disabled={currentPage === 0}
-            className="px-4 py-2 bg-accent-1 text-beige-1 rounded disabled:opacity-50"
-          >
-            ← Назад
-          </button>
-          <button 
-            onClick={() => loadPage(currentPage + 1)} 
-            disabled={currentPage === totalPages - 1}
-            className="px-4 py-2 bg-accent-1 text-beige-1 rounded disabled:opacity-50"
-          >
-            Вперед →
-          </button>
+    onClick={() => loadPage(currentPage - 1)} 
+    disabled={currentPage === 0}
+    className="px-4 py-2 rounded disabled:opacity-50 transition-colors"
+    style={{
+        backgroundColor: settings?.background_color === 'dark' ? '#4a4a4a' : '#ef4444',
+        color: '#ffffff'
+    }}
+>
+    ← Назад
+</button>
+<button 
+    onClick={() => loadPage(currentPage + 1)} 
+    disabled={currentPage === totalPages - 1}
+    className="px-4 py-2 rounded disabled:opacity-50 transition-colors"
+    style={{
+        backgroundColor: settings?.background_color === 'dark' ? '#4a4a4a' : '#ef4444',
+        color: '#ffffff'
+    }}
+>
+    Вперед →
+</button>
         </div>
       </div>
       <div 

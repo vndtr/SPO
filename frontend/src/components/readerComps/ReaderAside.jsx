@@ -1,3 +1,4 @@
+// frontend/src/components/readerComps/ReaderAside.jsx
 import React, { useState, useEffect } from 'react';
 import ReaderNote from './ReaderNote.jsx';
 import ReaderModal from './ReaderModal.jsx';
@@ -48,25 +49,26 @@ export default function ReaderAside({
     window.addEventListener('personalAnnotationsUpdated', handleUpdate);
     return () => window.removeEventListener('personalAnnotationsUpdated', handleUpdate);
   }, [soloSessionId]);
+
   const handleDelete = async (id, type) => {
     if (!window.confirm('Удалить аннотацию?')) return;
     
     try {
       await onDeleteAnnotation(id, type);
+      loadAnnotations();
     } catch (err) {
-      console.error(' Error deleting:', err);
+      console.error('Error deleting:', err);
       alert('Ошибка при удалении');
     }
   };
 
   const handleEdit = (id, type, currentColor, currentComment, selectedText) => {
-  if (onEditAnnotation) {
-    onEditAnnotation(id, type, currentColor, currentComment, selectedText);
-  }
-};
+    if (onEditAnnotation) {
+      onEditAnnotation(id, type, currentColor, currentComment, selectedText);
+    }
+  };
 
   const handleNoteClick = (id, startIndex) => {
-    console.log(' Click on annotation:', id, 'startIndex:', startIndex);
     if (onAnnotationClick) {
       onAnnotationClick(id, startIndex);
     }
@@ -83,9 +85,6 @@ export default function ReaderAside({
       </div>
     );
   }
-
-  // ← УДАЛИТЬ ЭТОТ БЛОК или исправить:
-  // if (error) { ... }
 
   return (
     <div className="max-w-[15vw] min-w-[15vw] flex flex-col bg-gray text-beige-1 h-full sidebar-transition">
@@ -110,7 +109,7 @@ export default function ReaderAside({
         ) : (
           filteredAnnotations.map((annotation) => (
             <ReaderNote 
-               key={`${annotation.id}_${annotation.type}`}
+              key={`${annotation.id}_${annotation.type}`}
               id={annotation.id}
               type={annotation.type}
               text={annotation.selected_text}
@@ -130,7 +129,6 @@ export default function ReaderAside({
           onClose={onCloseNoteModal}
           selectedText={selectedText}
           onAddNote={onAddNote}
-          
         />
       )}
     </div>

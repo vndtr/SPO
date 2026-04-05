@@ -376,41 +376,33 @@ export const deleteAnswer = async (answerId, sessionId, noteId) => {
 
 
 // ==================== НАСТРОЙКИ ====================
+// Получение настроек текущего пользователя
+export const getUserSettings = async () => {
+    try {
+        const response = await api.get('/user/profile');
+        const settings = {
+            font_size: response.data.font_size || 14,
+            background_color: response.data.background_color || 'light'
+        };
+        return settings;
+    } catch (error) {
+        console.error('Error loading user settings:', error);
+        return { font_size: 14, background_color: 'light' };
+    }
+};
 
-export const getReaderSettings = async () => {
-  try {
-    const response = await api.get('/user/profile');
-    // Преобразуем font_size из int в строку для фронтенда
-    let fontSize = 'medium';
-    if (response.data.font_size <= 12) fontSize = 'small';
-    else if (response.data.font_size === 14) fontSize = 'medium';
-    else if (response.data.font_size === 16) fontSize = 'large';
-    else if (response.data.font_size >= 18) fontSize = 'extra-large';
+// Обновление настроек пользователя
+export const updateUserSettings = async (settings) => {
+    // Сохраняем в localStorage сразу для быстрого доступа
+    localStorage.setItem('reader_settings', JSON.stringify(settings));
     
-    return {
-      font_size: fontSize,
-      background_color: response.data.background_color || 'light'
-    };
-  } catch (error) {
-    console.error('Error loading settings:', error);
-    return { font_size: 'medium', background_color: 'light' };
-  }
+    const response = await api.patch('/user/', {
+        font_size: settings.font_size,
+        background_color: settings.background_color
+    });
+    return response.data;
 };
 
-export const updateReaderSettings = async (settings) => {
-  // Преобразуем font_size из строки в int
-  let fontSize = 14;
-  if (settings.font_size === 'small') fontSize = 12;
-  else if (settings.font_size === 'medium') fontSize = 14;
-  else if (settings.font_size === 'large') fontSize = 16;
-  else if (settings.font_size === 'extra-large') fontSize = 18;
-  
-  const response = await api.patch('/user/', {
-    font_size: fontSize,
-    background_color: settings.background_color
-  });
-  return response.data;
-};
 export const updateParticipantRole = async (sessionId, userId, roleId) => {
     const response = await api.put(`/session/${sessionId}/users/${userId}`, {
         role_id: roleId
