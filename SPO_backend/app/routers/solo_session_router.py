@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, File, Request, Form, Query
 from fastapi.exceptions import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import crud
 import schemas, models
@@ -24,3 +25,24 @@ async def get_solo_session(
         db:AsyncSession = Depends(get_session)):
     return await crud.get_solo_session(request.state.user.id,book_id, db)
     
+@solo_session_router.get('/last')
+async def get_last_solo_session(
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    user = request.state.user
+    
+    stmt = select(models.Solo_Session).where(
+        models.Solo_Session.user_id == user.id
+    ).order_by(models.Solo_Session.id.desc()).limit(1)
+    
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not session:
+        return None
+    
+    return {
+        "id": session.id,
+        "book_id": session.book_id,
+        "last_position": session.last_position or 0
+    }

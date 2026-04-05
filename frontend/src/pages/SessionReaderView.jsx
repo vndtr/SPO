@@ -29,6 +29,7 @@ export default function SessionReaderView() {
   const sessionId = searchParams.get('sessionId');
   const sessionName = searchParams.get('name') || 'Сессия';
   const link = searchParams.get('link');
+  const highlightNoteId = searchParams.get('highlightNoteId');
   
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -44,6 +45,7 @@ export default function SessionReaderView() {
   const [readerSettings, setReaderSettings] = useState(null);
   const [showParticipants, setShowParticipants] = useState(false);
 const [showSettingsModal, setShowSettingsModal] = useState(false);
+const [highlightedNoteId, setHighlightedNoteId] = useState(null);
   const menuRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -144,6 +146,60 @@ useEffect(() => {
     window.addEventListener('settingsChanged', handleSettingsChange);
     return () => window.removeEventListener('settingsChanged', handleSettingsChange);
 }, []);
+
+// frontend/src/pages/SessionReaderView.jsx
+console.log('Highlight note ID from URL:', highlightNoteId);
+
+useEffect(() => {
+    if (highlightNoteId) {
+        console.log('Setting highlighted note ID:', highlightNoteId);
+        setHighlightedNoteId(parseInt(highlightNoteId));
+        // Сбрасываем параметр из URL
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('highlightNoteId');
+        window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
+    }
+}, [highlightNoteId]);
+
+useEffect(() => {
+    if (highlightedNoteId && !loading) {
+        console.log('Scrolling to note:', highlightedNoteId);
+        setTimeout(() => {
+            scrollToNote(highlightedNoteId);
+        }, 1000);
+    }
+}, [highlightedNoteId, loading]);
+
+const scrollToNote = (noteId) => {
+    console.log('Looking for element:', `note-${noteId}`);
+    const noteElement = document.getElementById(`note-${noteId}`);
+    console.log('Found element:', noteElement);
+    
+    if (noteElement) {
+        noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        noteElement.classList.add('highlight-flash');
+        setTimeout(() => {
+            noteElement.classList.remove('highlight-flash');
+        }, 2000);
+    const showRepliesButton = noteElement.querySelector('.show-replies-button');
+    if (showRepliesButton && showRepliesButton.textContent.includes('Показать ответы')) {
+            showRepliesButton.click();
+        }
+    
+    } else {
+        // Если элемент не найден, пробуем найти после загрузки аннотаций
+        setTimeout(() => {
+            const retryElement = document.getElementById(`note-${noteId}`);
+            if (retryElement) {
+                retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                retryElement.classList.add('highlight-flash');
+                setTimeout(() => {
+                    retryElement.classList.remove('highlight-flash');
+                }, 2000);
+            }
+        }, 500);
+    }
+};
 
   const handleQuote = async (color) => {
     
@@ -530,6 +586,7 @@ useEffect(() => {
             currentUser={currentUser}
             userRole={userRole}
             onEditAnnotation={openEditModal}
+            highlightedNoteId={highlightedNoteId}
           />
         )}
 

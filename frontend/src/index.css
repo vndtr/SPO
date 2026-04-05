@@ -97,6 +97,19 @@
   opacity: 0.8;
 }
 
+/* Подсветка для заметки при переходе из уведомления */
+.highlight-flash {
+    animation: highlightFlash 1s ease-in-out 3;
+    background-color: rgba(239, 235, 220, 0.786) !important;
+    border-radius: 0.5rem;
+}
+
+@keyframes highlightFlash {
+   
+    50% { background-color: rgba(231, 223, 195, 0.964); }
+    
+}
+
 @keyframes flash {
   0% { background-color: rgba(245, 158, 11, 0.2); }
   50% { background-color: rgba(245, 158, 11, 0.5); }

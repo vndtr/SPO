@@ -20,8 +20,8 @@ from middleware import AuthMiddleware
 
 app = FastAPI()
 
-
 app.add_middleware(AuthMiddleware)
+
 app.add_middleware(
      CORSMiddleware,
      allow_origins=["http://localhost:5173", "http://localhost:5000"],
@@ -29,6 +29,7 @@ app.add_middleware(
      allow_methods=["*"],
      allow_headers=["*"],
  )
+
 
 
 app.include_router(minio_api.minio_router)

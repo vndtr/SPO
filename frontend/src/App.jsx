@@ -47,7 +47,7 @@ const applyGlobalStyles = (settings) => {
     document.body.style.color = textColors[settings.background_color] || '#374151';
 };
 
-
+  // В App.jsx, в checkAuth после получения пользователя:
 const checkAuth = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {

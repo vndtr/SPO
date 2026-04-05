@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getAnswersByNoteId } from '../../services/api';
 
 export default function SessionReaderNote({ 
-  id, type, text, comment, color, author, visibility, start_index, end_index,
+  id, elementId,  shouldOpenReplies,  type, text, comment, color, author, visibility, start_index, end_index,
   currentUser, onDelete, onEdit, onReplyClick, 
   replyToNote, replyText, onReplyTextChange, onSubmitReply, onCancelReply, onNoteClick 
 }) {
   const [showReplies, setShowReplies] = useState(false);
   const [answers, setAnswers] = useState([]);
   const [loadingAnswers, setLoadingAnswers] = useState(false);
-  
+  const hasOpenedRef = useRef(false);
   const isOwn = author?.id === currentUser?.user_id;
   const isTeacher = author?.role === 'teacher';
   const isReplyOpen = replyToNote?.id === id;
@@ -20,6 +20,15 @@ export default function SessionReaderNote({
       loadAnswers();
     }
   }, [showReplies, id]);
+  useEffect(() => {
+        if (shouldOpenReplies && !hasOpenedRef.current && type === 'note') {
+            hasOpenedRef.current = true;
+            setShowReplies(true);
+            if (answers.length === 0 && !loadingAnswers) {
+                loadAnswers();
+            }
+        }
+    }, [shouldOpenReplies, type]);
 
   const loadAnswers = async () => {
     setLoadingAnswers(true);
@@ -96,7 +105,11 @@ export default function SessionReaderNote({
 
   // Заметка с ответами
   return (
-    <div className={`flex flex-col rounded-xl bg-beige-1 text-blue p-3 mx-1 my-1 border-l-4 ${getBorderColor()} cursor-pointer hover:shadow-md transition-shadow`} onClick={handleCardClick}>
+       <div 
+        id={elementId}
+        className={`flex flex-col rounded-xl bg-beige-1 text-blue p-3 mx-1 my-1 border-l-4 ${getBorderColor()} cursor-pointer hover:shadow-md transition-shadow`}
+        onClick={handleCardClick}
+    >
       <div className="flex justify-between items-start mb-2">
         <span className={`text-xs px-2 py-1 rounded-full ${isTeacher ? 'bg-purple-200 text-purple-800' : 'bg-blue-200 text-blue-800'}`}>
           {author?.name} {isTeacher ? '(Учитель)' : ''}
@@ -124,12 +137,12 @@ export default function SessionReaderNote({
         {/* Кнопка показа/скрытия ответов */}
         {!isReplyOpen && (
             <button 
-                onClick={(e) => { e.stopPropagation(); setShowReplies(!showReplies); }} 
-                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded"
-            >
-                {showReplies ? 'Скрыть ответы' : 'Показать ответы'}
-                {answers.length > 0 && ` (${answers.length})`}
-            </button>
+    onClick={(e) => { e.stopPropagation(); setShowReplies(!showReplies); }} 
+    className="show-replies-button text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded"
+>
+    {showReplies ? 'Скрыть ответы' : 'Показать ответы'}
+    {answers.length > 0 && ` (${answers.length})`}
+</button>
         )}
     </div>
     

@@ -458,4 +458,74 @@ export const searchAll = async (query) => {
   return { books, sessions };
 };
 
+//УВЕДОМЛЕНИЯ
+export const getRecentAnswers = async (limit = 10) => {
+    const response = await api.get('/answer/recent', {
+        params: { limit }
+    });
+    return response.data;
+};
+
+// Получение последней открытой книги (личное чтение)
+
+
+export const getLastOpenedBook = async () => {
+    try {
+        const response = await api.get('/solo_session/last');
+        console.log('Last opened book response:', response.data);
+        
+        // Если ответ null или нет данных
+        if (!response.data || !response.data.book_id) {
+            return null;
+        }
+        
+        const book = await getBookById(response.data.book_id);
+        return {
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            progress: response.data.last_position || 0,
+            cover_img: book.cover_img
+        };
+    } catch (error) {
+        console.error('Error getting last opened book:', error);
+        return null;
+    }
+};
+
+// Получение последних сессий пользователя
+export const getRecentSessions = async (limit = 3) => {
+    try {
+        const sessions = await getSessions();
+        // Сортируем по ID (чем больше ID, тем новее) или по дате создания
+        const sorted = sessions.sort((a, b) => b.id - a.id);
+        const recent = sorted.slice(0, limit);
+        
+        // Загружаем информацию о книгах для каждой сессии
+        const result = [];
+        for (const session of recent) {
+            try {
+                const book = await getBookById(session.book_id);
+                result.push({
+                    id: session.id,
+                    name: session.name,
+                    book_title: book.title,
+                    book_author: book.author,
+                    book_cover: book.cover_img,
+                    members: 0, // TODO: посчитать участников
+                    notes: 0,   // TODO: посчитать заметки
+                    link: session.link
+                });
+            } catch (err) {
+                console.error('Error loading book for session:', err);
+            }
+        }
+        return result;
+    } catch (error) {
+        console.error('Error getting recent sessions:', error);
+        return [];
+    }
+};
+
+
 export default api;

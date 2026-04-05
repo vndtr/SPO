@@ -1,15 +1,17 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
-from websocket_manager import manager
+from websocket_manager import manager, notification_connections
 from sqlalchemy import select
 from database import AsyncSessionLocal
 import models
 import os
 from jose import jwt
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
 ws_router = APIRouter(prefix='/ws', tags=['websocket'])
+
 
 @ws_router.websocket("/session/{session_id}")
 async def websocket_endpoint(
@@ -17,6 +19,7 @@ async def websocket_endpoint(
     session_id: int,
     token: str = Query(...)
 ):
+    # Принимаем соединение ТОЛЬКО здесь
     await websocket.accept()
     
     try:
@@ -44,9 +47,8 @@ async def websocket_endpoint(
         await manager.connect(session_id, websocket)
         
         while True:
-            # Просто держим соединение открытым, ждем сообщения
             data = await websocket.receive_text()
-            # Можно обработать пинг-понг или другие сообщения от клиента
+            await manager.broadcast(session_id, json.loads(data))
             
     except WebSocketDisconnect:
         manager.disconnect(session_id, websocket)
@@ -56,3 +58,51 @@ async def websocket_endpoint(
             await websocket.close(code=1011)
         except:
             pass
+
+@ws_router.websocket("/notifications")
+async def notifications_endpoint(
+    websocket: WebSocket,
+    token: str = Query(...)
+):
+    print(f"Notification WebSocket attempt with token: {token[:50]}...")
+    
+    try:
+        await websocket.accept()
+        print("WebSocket accepted")
+        
+        SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
+        ALGORITHM = "HS256"
+        
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        print(f"Decoded user_id: {user_id}")
+        
+        if not user_id:
+            print("No user_id, closing")
+            await websocket.close(code=1008)
+            return
+        
+        if user_id not in notification_connections:
+            notification_connections[user_id] = []
+        notification_connections[user_id].append(websocket)
+        
+        print(f"User {user_id} connected to notifications. Total connections: {len(notification_connections[user_id])}")
+        
+        while True:
+            await websocket.receive_text()
+            
+    except WebSocketDisconnect:
+        print(f"User {user_id} disconnected from notifications")
+        if user_id and user_id in notification_connections:
+            if websocket in notification_connections[user_id]:
+                notification_connections[user_id].remove(websocket)
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        await websocket.close(code=1008, reason="Token expired")
+    except jwt.JWTError as e:
+        print(f"JWT decode error: {e}")
+        await websocket.close(code=1008, reason="Invalid token")
+    except Exception as e:
+        print(f"Notification WebSocket error: {e}")
+        import traceback
+        traceback.print_exc()

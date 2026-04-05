@@ -15,7 +15,8 @@ export default function SessionReaderAside({
   onAnnotationClick,
   currentUser,
   userRole,
-  onEditAnnotation
+  onEditAnnotation,
+  highlightedNoteId = null
 }) {
   const [filterType, setFilterType] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
@@ -145,6 +146,23 @@ useEffect(() => {
     return () => window.removeEventListener('forceReloadAnnotations', handleForceReload);
 }, [sessionId]);
 
+useEffect(() => {
+    window.openNoteReplies = (noteId) => {
+        // Находим компонент заметки и открываем ответы
+        const noteComponent = document.getElementById(`note-${noteId}`);
+        if (noteComponent) {
+            const showRepliesButton = noteComponent.querySelector('.show-replies-button');
+            if (showRepliesButton) {
+                showRepliesButton.click();
+            }
+        }
+    };
+    
+    return () => {
+        delete window.openNoteReplies;
+    };
+}, []);
+
 const filteredAnnotations = annotations.filter(ann => {
     // 1. Сначала фильтр по типу
     if (filterType !== 'all' && ann.type !== filterType) {
@@ -255,9 +273,11 @@ const filteredAnnotations = annotations.filter(ann => {
               const isReplyOpen = replyToNote?.id === ann.id;
               return (
                 <SessionReaderNote 
-    key={`${ann.id}_note_${index}`}
+    key={`${ann.id}_${index}`}
     id={ann.id}
-    type="note"
+    elementId={`note-${ann.id}`}
+    shouldOpenReplies={highlightedNoteId === ann.id}
+    type={ann.type}
     text={ann.selected_text}
     comment={ann.comment}
     color={ann.color}
@@ -271,9 +291,7 @@ const filteredAnnotations = annotations.filter(ann => {
     end_index={ann.end_index}
     currentUser={currentUser}
     onDelete={onDeleteAnnotation}
-    onEdit={(id, type, color, comment, text, visibility, startIndex, endIndex) => 
-        onEditAnnotation(id, type, color, comment, text, visibility, startIndex, endIndex)
-    }
+    onEdit={onEditAnnotation}
     onReplyClick={() => handleReplyClick(ann)}
     replyToNote={replyToNote}
     replyText={replyText}
