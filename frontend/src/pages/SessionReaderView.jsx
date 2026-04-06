@@ -70,6 +70,13 @@ export default function SessionReaderView() {
       if (window.updateBookReaderAnnotations) {
         window.updateBookReaderAnnotations(allAnnotations);
       }
+
+      setTimeout(() => {
+            if (window.forceApplyStyles) {
+                window.forceApplyStyles();
+            }
+        }, 50);
+        
     } catch (err) {
       console.error('Error refreshing annotations:', err);
     }
@@ -540,6 +547,11 @@ export default function SessionReaderView() {
         }
         
         refreshAnnotations();
+        setTimeout(() => {
+            if (window.forceApplyStyles) {
+                window.forceApplyStyles();
+            }
+        }, 100);
       } catch (e) {
         console.error('Error parsing WebSocket message:', e);
       }
