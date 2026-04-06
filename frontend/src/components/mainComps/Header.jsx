@@ -168,11 +168,7 @@ export default function Header() {
           </svg>
         </button>
         
-        <Link to="/profile" className="header-action-button">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="8"/>
-          </svg>
-        </Link>
+    
       </div>
       <div className="header-actions-area">
         <Link to="/profile" className="header-action-button">

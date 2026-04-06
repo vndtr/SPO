@@ -1,3 +1,5 @@
+/* шапка */
+
 .reader-header {
   display: flex;
   flex-direction: column;
@@ -8,15 +10,25 @@
   display: flex;
 }
 
+/* Область логотипа - ширина синхронизирована с боковой панелью */
 .reader-header-logo-area {
-  max-width: 30vw;
+  max-width: 15vw;
   min-width: 15vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   background: linear-gradient(135deg, #1a2c3e 0%, #0f1e2c 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Когда боковая панель скрыта, логотип тоже скрывается */
+.reader-header-logo-hidden {
+  max-width: 0;
+  min-width: 0;
+  padding: 0;
+  opacity: 0;
+  border-right: none;
 }
 
 .reader-header-logo-link {
@@ -37,6 +49,7 @@
   transform: scale(1.02);
 }
 
+/* Основное содержимое шапки */
 .reader-header-content {
   flex: 1;
   display: flex;
@@ -99,13 +112,15 @@
   height: 1.5rem;
 }
 
+/* Красная линия под шапкой */
 .reader-header-red-line {
   height: 1px;
   background-color: #ef4444;
   transition: all 0.3s ease;
 }
 
-/* Меню с троеточия */
+/* троеточие */
+
 .reader-header-menu {
   position: fixed;
   right: 0.5rem;
@@ -150,15 +165,26 @@
 }
 
 /* боковая панель */
+
 .reader-aside {
   max-width: 15vw;
   min-width: 15vw;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #1e2a3a 0%, #0f1722 100%);
-  color:  #e2e8f0;
+  color: #e2e8f0;
   height: 100%;
   overflow-y: auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Скрытая боковая панель */
+.reader-aside-hidden {
+  max-width: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
 }
 
 .reader-aside-title {
@@ -166,7 +192,7 @@
   margin-left: 0.5rem;
   margin-top: 1rem;
   font-size: 1.125rem;
-  font-weight: 500;
+  font-weight:  normal;
 }
 
 .reader-aside-filter {
@@ -183,12 +209,10 @@
   cursor: pointer;
 }
 
-
 .reader-aside-select option {
   background: #ffffff;
   color: #1e293b;
 }
-
 
 .reader-aside-select:focus {
   outline: none;
@@ -220,7 +244,8 @@
   color: rgba(226, 232, 240, 0.7);
 }
 
-/* Общие стили для карточек */
+/* аннотации */
+
 .reader-note-card,
 .reader-note-quote {
   border-radius: 1rem;
@@ -243,32 +268,20 @@
   flex-direction: column;
   background: #ffffff;
   color: #1e293b;
-  border-left-width: 4px;
-  border-left-style: solid;
   border-radius: 0.75rem;
   padding: 0.75rem;
   margin: 0.25rem 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-left-width: 4px;
+  border-left-style: solid;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Цвета левой границы заметок */
-.reader-note-card.reader-note-yellow {
-  border-left-color: #eab308;
-}
-
-.reader-note-card.reader-note-green {
-  border-left-color: #22c55e;
-}
-
-.reader-note-card.reader-note-blue {
-  border-left-color: #3b82f6;
-}
-
-.reader-note-card.reader-note-pink {
-  border-left-color: #ec4899;
-}
+.reader-note-yellow { border-left-color: #eab308; }
+.reader-note-green { border-left-color: #22c55e; }
+.reader-note-blue { border-left-color: #3b82f6; }
+.reader-note-pink { border-left-color: #ec4899; }
 
 /* Карточка цитаты */
 .reader-note-quote {
@@ -277,22 +290,10 @@
 }
 
 /* Цвета фона цитат */
-.reader-note-quote-yellow {
-  background: #fef9c3;
-
-}
-.reader-note-quote-green {
-  background: #dcfce7;
- 
-}
-.reader-note-quote-blue {
-  background: #dbeafe;
-
-}
-.reader-note-quote-pink {
-  background: #fce7f3;
-
-}
+.reader-note-quote-yellow { background: #fef9c3; }
+.reader-note-quote-green { background: #dcfce7; }
+.reader-note-quote-blue { background: #dbeafe; }
+.reader-note-quote-pink { background: #fce7f3; }
 
 /* Заголовок карточки */
 .reader-note-header {
@@ -311,6 +312,7 @@
   border-radius: 1rem;
   background: #3b82f6;
   color: white;
+  white-space: nowrap;
 }
 
 .reader-note-author-teacher {
@@ -323,55 +325,80 @@
   border-radius: 1rem;
   background: #e2e8f0;
   color: #475569;
+  white-space: nowrap;
 }
 
-/* Текст цитаты */
+/* Текст */
 .reader-note-quote-text {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   line-height: 1.4;
   margin-bottom: 0.5rem;
   color: #334155;
-  font-style: italic;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
-/* Разделитель */
 .reader-note-divider {
   height: 1px;
   background: linear-gradient(90deg, #e2e8f0, transparent);
   margin: 0.5rem 0;
 }
 
-/* Комментарий заметки */
 .reader-note-comment {
   font-size: 0.75rem;
   line-height: 1.4;
   margin-bottom: 0.5rem;
   color: #475569;
-  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
-/* Действия на карточке */
+/* Кнопки действий */
 .reader-note-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reader-note-reply-btn,
+.show-replies-button {
+  font-size: 0.65rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  white-space: nowrap;
+}
+
+.reader-note-reply-btn {
+  background: rgba(255, 179, 71, 0.15);
+  color: #ff8c1a;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reader-note-reply-btn:hover {
+  background: rgba(255, 179, 71, 0.3);
+  transform: translateY(-1px);
 }
 
 .reader-note-edit-btn,
 .reader-note-delete-btn {
   padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 0.5rem;
   cursor: pointer;
+  border-radius: 0.5rem;
   transition: all 0.2s ease;
   color: #94a3b8;
 }
@@ -392,23 +419,8 @@
   height: 0.875rem;
 }
 
-.reader-note-reply-btn {
-  font-size: 0.7rem;
-  background: rgba(255, 179, 71, 0.15);
-  color: #ff8c1a;
-  padding: 0.25rem 0.6rem;
-  border-radius: 1rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+/*ответы */
 
-.reader-note-reply-btn:hover {
-  background: rgba(255, 179, 71, 0.3);
-  transform: translateY(-1px);
-}
-
-/*Ответы */
 .reader-note-replies {
   margin-top: 0.75rem;
   padding-left: 0.75rem;
@@ -436,6 +448,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .reader-note-answer-author {
@@ -459,7 +473,76 @@
   line-height: 1.4;
 }
 
-/*Меню */
+/* форма ответа */
+
+.reader-note-reply-form {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.reader-note-reply-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.reader-note-reply-textarea:focus {
+  outline: none;
+  border-color: #ffb347;
+  box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.1);
+}
+
+.reader-note-reply-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.reader-note-reply-submit {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #ffb347, #ff8c1a);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reader-note-reply-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 140, 26, 0.3);
+}
+
+.reader-note-reply-cancel {
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reader-note-reply-cancel:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
 .selection-menu {
   position: fixed;
   z-index: 9999;
@@ -537,7 +620,8 @@
   transform: translateY(-1px);
 }
 
-/* Модальные окна */
+/*модальные окна*/
+
 .reader-modal-selected-text {
   background: #fef7e8;
   padding: 1rem;
@@ -580,11 +664,13 @@
 .reader-modal-color-label {
   font-size: 0.875rem;
   font-weight: 500;
+  color: #1e293b;
 }
 
 .reader-modal-colors {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .reader-modal-color-btn {
@@ -609,6 +695,7 @@
 .reader-modal-visibility-options {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .reader-modal-visibility-option {
@@ -618,7 +705,8 @@
   cursor: pointer;
 }
 
-/* Настройки */
+/* настройки */
+
 .settings-font-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -673,107 +761,8 @@
   margin-bottom: 0.25rem;
 }
 
-/* Модальное окно с участниками */
-.participants-loading {
-  text-align: center;
-  padding: 2rem;
-  color: #9c8a76;
-}
+/*навигация*/
 
-.participants-list {
-  max-height: 24rem;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.participant-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #fef7e8;
-  border-radius: 0.75rem;
-  transition: background 0.2s;
-}
-
-.participant-item:hover {
-  background: #fff5e6;
-}
-
-.participant-avatar {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 9999px;
-  background: rgba(255, 179, 71, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #d4a373;
-}
-
-.participant-info {
-  flex: 1;
-}
-
-.participant-name {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: #1e293b;
-}
-
-.participant-role {
-  font-size: 0.7rem;
-  color: #9c8a76;
-}
-
-.participant-badge {
-  font-size: 0.7rem;
-  background: #e9d5ff;
-  color: #7e22ce;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-}
-
-.participant-role-select {
-  font-size: 0.75rem;
-  background: rgba(255, 179, 71, 0.2);
-  color: #ff8c1a;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-}
-
-.participant-role-select:hover {
-  background: rgba(255, 179, 71, 0.4);
-}
-
-.participants-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
-}
-
-.participants-modal-button {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #ffb347, #ff8c1a);
-  color: #ffffff;
-  border: none;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.participants-modal-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(255, 140, 26, 0.3);
-}
-
-/* Кнопки навигации */
 .reader-nav-buttons {
   position: fixed;
   bottom: 2rem;
@@ -812,245 +801,8 @@
   height: 1.5rem;
 }
 
-/* Темы читалки */
-.reader-dark {
-  background-color: #1a1a1a;
-  color: #e5e5e5;
-}
+/*темы */
 
-.reader-dark p {
-  color: #e5e5e5;
-}
-
-.reader-beige {
-  background-color: #fdf8f2;
-  color: #374151;
-}
-
-.reader-light {
-  background-color: #ffffff;
-  color: #374151;
-}
-
-/* Адаптивность */
-@media (max-width: 1024px) {
-  .reader-header-logo-area {
-    max-width: 25vw;
-    min-width: 12vw;
-  }
-  .reader-header-logo {
-    width: 6rem;
-    height: 6rem;
-  }
-  .reader-header-title {
-    font-size: 1.5rem;
-    margin-left: 1rem;
-  }
-  .reader-aside {
-    max-width: 20vw;
-    min-width: 12vw;
-  }
-}
-
-/* Мобильная версия */
-@media (max-width: 768px) {
-  .reader-container {
-    flex-direction: column;
-  }
-  
-  /* Боковая панель в читалке */
-  .reader-aside {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    max-width: 100%;
-    min-width: 100%;
-    z-index: 50;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-  
-  .reader-aside.open {
-    transform: translateX(0);
-  }
-  
-  /* Шапка читалки */
-  .reader-header-logo-area {
-    display: none;
-  }
-  
-  .reader-header-content {
-    width: 100%;
-  }
-  
-  .reader-header-title {
-    font-size: 1rem;
-    margin: 0.75rem;
-  }
-  
-  .reader-header-actions {
-    margin: 0.5rem;
-    padding: 0.5rem;
-  }
-  
-  /* Контент книги */
-  .reader-main {
-    padding: 1rem;
-  }
-  
-  .reader-content p {
-    font-size: 0.875rem;
-    line-height: 1.5;
-  }
-  
-  /* Кнопки навигации */
-  .reader-nav-buttons {
-    bottom: 1rem;
-    right: 1rem;
-  }
-  
-  .reader-nav-button {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-  
-  /* Меню выбора цвета */
-  .selection-menu-content {
-    min-width: 250px;
-    padding: 0.5rem;
-  }
-  
-  .selection-menu-color-btn {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .reader-header-logo-area {
-    display: none;
-  }
-  .reader-header-content {
-    width: 100%;
-  }
-  .reader-header-title {
-    font-size: 1rem;
-  }
-  .reader-aside {
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    z-index: 40;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  }
-  .selection-menu-content {
-    min-width: 200px;
-  }
-}
-
-/* Анимация для скрытия/показа боковой панели */
-.reader-aside {
-  max-width: 15vw;
-  min-width: 15vw;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(135deg, #1e2a3a 0%, #0f1722 100%);
-  color: #e2e8f0;
-  height: 100%;
-  overflow-y: auto;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 1;
-}
-
-/* Скрытая боковая панель */
-.reader-aside-hidden {
-  max-width: 0;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-}
-
-/* Скрытая область логотипа */
-.reader-header-logo-hidden {
-  max-width: 0;
-  min-width: 0;
-  padding: 0;
-  opacity: 0;
-  border-right: none;
-}
-
-/* Красная линия с анимацией */
-.reader-header-red-line {
-  height: 1px;
-  background-color: #ef4444;
-  transition: all 0.3s ease;
-}
-
-/* Основной контент с анимацией */
-.reader-main {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
-  transition: all 0.3s ease;
-}
-
-.reader-aside-hidden + .reader-main,
-.reader-layout:has(.reader-aside-hidden) .reader-main {
-  margin-left: 0;
-  width: 100%;
-}
-
-/* Скрытая боковая панель */
-.reader-aside-hidden {
-  max-width: 0;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Анимация для контента внутри при скрытии */
-.reader-aside-hidden .reader-aside-title,
-.reader-aside-hidden .reader-aside-filter,
-.reader-aside-hidden .reader-aside-annotations {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* Скрытая область логотипа */
-.reader-header-logo-hidden {
-  max-width: 0;
-  min-width: 0;
-  padding: 0;
-  opacity: 0;
-  border-right: none;
-}
-
-.reader-header-red-line {
-  height: 1px;
-  background-color: #ef4444;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.reader-layout:has(.reader-aside-hidden) .reader-main {
-  margin-left: 0;
-  width: 100%;
-}
-
-.reader-header-button {
-  transition: all 0.2s ease;
-}
-
-.reader-header-button:hover {
-  transform: scale(1.05);
-}
-
-/* Светлая тема (по умолчанию) */
 .reader-theme-light {
   background-color: #ffffff;
   color: #374151;
@@ -1064,7 +816,6 @@
   color: #374151;
 }
 
-/* Тёмная тема */
 .reader-theme-dark {
   background-color: #2a2a2a;
   color: #e0e0e0;
@@ -1098,7 +849,6 @@
   color: #ffb347;
 }
 
-/* Бежевая тема */
 .reader-theme-beige {
   background-color: #f5f0e8;
   color: #4a3b2c;
@@ -1132,146 +882,189 @@
   color: #ffb347;
 }
 
-/* Модальные окна в темной теме */
-.reader-theme-dark .modal-container {
-  background-color: #2a2a2a;
-  border-color: #4a4a4a;
+/*адаптивность*/
+
+/* Планшеты (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .reader-header-logo {
+    width: 5rem;
+    height: 5rem;
+  }
+  
+  .reader-header-title {
+    font-size: 1.25rem;
+    margin-left: 1rem;
+  }
+  
+  .reader-aside {
+    max-width: 30vw;
+    min-width: 30vw;
+  }
+  
+  .reader-note-reply-btn,
+  .show-replies-button {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+  }
 }
 
-.reader-theme-dark .modal-title {
-  color: #e0e0e0;
+/* Мобильные устройства (до 768px) */
+@media (max-width: 768px) {
+  /* Скрываем логотип */
+  .reader-header-logo-area {
+    display: none;
+  }
+  
+  .reader-header-content {
+    width: 100%;
+  }
+  
+  .reader-header-title {
+    font-size: 1rem;
+    margin: 0.75rem;
+  }
+  
+  .reader-header-actions {
+    margin: 0.5rem;
+    padding: 0.5rem;
+  }
+  
+  /* Боковая панель на всю ширину */
+  .reader-aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 85vw;
+    min-width: 85vw;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .reader-aside.open {
+    transform: translateX(0);
+  }
+  
+  /* Контент книги */
+  .reader-main {
+    padding: 1rem;
+  }
+  
+  .reader-content p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  /* Кнопки навигации */
+  .reader-nav-buttons {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .reader-nav-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  /* Меню выбора цвета */
+  .selection-menu-content {
+    min-width: 250px;
+    padding: 0.5rem;
+  }
+  
+  .selection-menu-color-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  /* Карточки аннотаций */
+  .reader-note-card {
+    padding: 0.5rem;
+  }
+  
+  .reader-note-author,
+  .reader-note-visibility {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+  }
+  
+  .reader-note-quote-text,
+  .reader-note-comment {
+    font-size: 0.7rem;
+  }
+  
+  .reader-note-reply-btn,
+  .show-replies-button {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  .reader-note-edit-btn svg,
+  .reader-note-delete-btn svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  
+  /* Кнопки в столбик на мобильных */
+  .reader-note-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .reader-note-actions > div {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .reader-note-actions > div:last-child {
+    justify-content: flex-end;
+  }
+  
+  /* Ответы на мобильных */
+  .reader-note-answer-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .reader-note-answer-time {
+    font-size: 0.5rem;
+  }
 }
 
-.reader-theme-dark .form-label {
-  color: #a0a0a0;
-}
-
-.reader-theme-dark .form-input,
-.reader-theme-dark .form-select,
-.reader-theme-dark .reader-modal-textarea {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
-  border-color: #4a4a4a;
-}
-
-.reader-theme-dark .form-input:focus,
-.reader-theme-dark .form-select:focus,
-.reader-theme-dark .reader-modal-textarea:focus {
-  border-color: #ffb347;
-  box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.2);
-}
-
-.reader-theme-dark .reader-modal-selected-text {
-  background-color: #1a1a1a;
-  border-color: #4a4a4a;
-}
-
-.reader-theme-dark .reader-modal-selected-content {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-}
-
-.reader-theme-dark .modal-error {
-  background-color: #4a1a1a;
-  color: #ff8a8a;
-}
-
-/* Модальные окна в бежевой теме */
-.reader-theme-beige .modal-container {
-  background-color: #fdf8f2;
-  border-color: #d4a373;
-}
-
-.reader-theme-beige .modal-title {
-  color: #4a3b2c;
-}
-
-.reader-theme-beige .form-label {
-  color: #7c6b54;
-}
-
-.reader-theme-beige .form-input,
-.reader-theme-beige .form-select,
-.reader-theme-beige .reader-modal-textarea {
-  background-color: #ffffff;
-  color: #4a3b2c;
-  border-color: #d4a373;
-}
-
-.reader-theme-beige .reader-modal-selected-text {
-  background-color: #fff5e6;
-  border-color: #d4a373;
-}
-
-.reader-theme-beige .reader-modal-selected-content {
-  background-color: #ffffff;
-  color: #4a3b2c;
-}
-/* Форма ответа на заметку */
-.reader-note-reply-form {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background: #f8fafc;
-  border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-}
-
-.reader-note-reply-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  font-family: inherit;
-  resize: vertical;
-  transition: all 0.2s ease;
-  background: #ffffff;
-}
-
-.reader-note-reply-textarea:focus {
-  outline: none;
-  border-color: #ffb347;
-  box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.1);
-}
-
-.reader-note-reply-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 0.75rem;
-}
-
-.reader-note-reply-submit {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #ffb347, #ff8c1a);
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.reader-note-reply-submit:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(255, 140, 26, 0.3);
-}
-
-.reader-note-reply-cancel {
-  padding: 0.5rem 1rem;
-  background: #f1f5f9;
-  color: #64748b;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.reader-note-reply-cancel:hover {
-  background: #e2e8f0;
-  color: #475569;
-  transform: translateY(-1px);
+/* Очень маленькие экраны (до 480px) */
+@media (max-width: 480px) {
+  .reader-header-title {
+    font-size: 0.875rem;
+  }
+  
+  .reader-header-author {
+    display: none;
+  }
+  
+  .reader-header-button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .selection-menu-content {
+    min-width: 200px;
+  }
+  
+  .selection-menu-color-label {
+    font-size: 0.75rem;
+  }
+  
+  .selection-menu-color-btn {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .selection-menu-note-btn {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
