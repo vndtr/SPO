@@ -170,3 +170,32 @@
     text-align: center;
   }
 }
+@media (max-width: 768px) {
+  .modal-container {
+    width: 95%;
+    padding: 1rem;
+    margin: 1rem;
+  }
+  
+  .modal-title {
+    font-size: 1.125rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-button-cancel,
+  .form-button-submit {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .reader-modal-colors {
+    flex-wrap: wrap;
+  }
+  
+  .participants-list {
+    max-height: 60vh;
+  }
+}

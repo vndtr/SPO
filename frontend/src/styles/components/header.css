@@ -9,13 +9,24 @@
 
 /* Левая область с логотипом */
 .header-logo-area {
-  max-width: 30vw;
+  max-width: 15vw;
   min-width: 15vw;
   display: flex;
   justify-content: center;
   align-items: center;
   background: linear-gradient(135deg, #1a2c3e 0%, #0f1e2c 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Когда боковая панель скрыта, логотип тоже скрывается */
+.header-logo-area.logo-hidden {
+  max-width: 0;
+  min-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+  border-right: none;
 }
 
 .header-logo-link {
@@ -29,7 +40,6 @@
   height: 7rem;
   color: #ffd966;
   transition: all 0.3s ease;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .header-logo-svg:hover {
@@ -38,19 +48,29 @@
 }
 
 /* Область поиска */
+
 .header-search-area {
   flex: 1;
   display: flex;
   align-items: center;
-  padding: 0 2rem;
+  padding: 0 1rem;
+  transition: all 0.3s ease;
+}
+
+.header-search-area.search-expanded {
+  padding-left: 2rem;
 }
 
 .search-wrapper {
   position: relative;
   width: 100%;
   max-width: 32rem;
+  transition: all 0.3s ease;
 }
 
+.search-expanded .search-wrapper {
+  max-width: 100%;
+}
 .search-icon-wrapper {
   position: absolute;
   left: 0;
@@ -293,4 +313,57 @@
   font-size: 0.75rem;
   margin-top: 0.25rem;
   color: #9ca3af;
+}
+/* Кнопка гамбургера для мобильных устройств */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-toggle:hover {
+  color: #ff8c1a;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Адаптив для планшетов */
+@media (max-width: 1024px) {
+  .header-logo-svg {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+}
+
+/* Адаптив для телефонов */
+@media (max-width: 768px) {
+  .header-logo-svg {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  .header-search-area {
+    padding: 0 0.5rem;
+  }
+}
+@media (max-width: 640px) {
+  .header-logo-area {
+    max-width: 12vw;
+    min-width: 12vw;
+  }
+  
+  .header-logo-svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
 }

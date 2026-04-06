@@ -103,3 +103,70 @@ body {
 .reader-layout {
   display: flex;
 }
+
+/* Мобильная версия (до 768px) */
+@media (max-width: 768px) {
+  /* Глобальные настройки */
+  body {
+    font-size: 14px;
+  }
+  
+  /* Контейнеры страниц */
+  .library-container,
+  .sessions-container,
+  .profile-container,
+  .main-container {
+    padding: 1rem !important;
+  }
+  
+  /* Заголовки */
+  .library-title,
+  .sessions-title,
+  .profile-title {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Сетки */
+  .books-grid,
+  .sessions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* Кнопки */
+  .upload-button,
+  .create-session-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Блок сортировки */
+  .library-actions,
+  .sessions-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .sort-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Планшетная версия (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .books-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .sessions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .library-container,
+  .sessions-container,
+  .profile-container,
+  .main-container {
+    padding: 1.5rem !important;
+  }
+}

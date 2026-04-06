@@ -852,38 +852,79 @@
   }
 }
 
+/* Мобильная версия */
 @media (max-width: 768px) {
-  .reader-header-logo-area {
-    max-width: 20vw;
-    min-width: 10vw;
+  .reader-container {
+    flex-direction: column;
   }
-  .reader-header-logo {
-    width: 5rem;
-    height: 5rem;
-  }
-  .reader-header-title {
-    font-size: 1.125rem;
-    margin: 1rem 0 1rem 0.75rem;
-  }
-  .reader-header-author {
-    font-size: 0.75rem;
-  }
-  .reader-header-actions {
-    padding: 0.5rem;
-    margin: 1rem;
-    gap: 0.75rem;
-  }
-  .reader-header-button svg {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
+  
+  /* Боковая панель в читалке */
   .reader-aside {
-    max-width: 30vw;
-    min-width: 25vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 100%;
+    min-width: 100%;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
   }
+  
+  .reader-aside.open {
+    transform: translateX(0);
+  }
+  
+  /* Шапка читалки */
+  .reader-header-logo-area {
+    display: none;
+  }
+  
+  .reader-header-content {
+    width: 100%;
+  }
+  
+  .reader-header-title {
+    font-size: 1rem;
+    margin: 0.75rem;
+  }
+  
+  .reader-header-actions {
+    margin: 0.5rem;
+    padding: 0.5rem;
+  }
+  
+  /* Контент книги */
+  .reader-main {
+    padding: 1rem;
+  }
+  
+  .reader-content p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  /* Кнопки навигации */
+  .reader-nav-buttons {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .reader-nav-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  /* Меню выбора цвета */
   .selection-menu-content {
     min-width: 250px;
     padding: 0.5rem;
+  }
+  
+  .selection-menu-color-btn {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 }
 

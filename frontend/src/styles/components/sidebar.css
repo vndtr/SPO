@@ -166,3 +166,56 @@
 .main-content-transition {
   transition: margin-left 0.3s ease;
 }
+
+/* Мобильная версия бокового меню */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    bottom: 0;
+    width: 80%;
+    max-width: 300px;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    border-radius: 0;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .sidebar-menu {
+    flex-direction: column;
+    padding-top: 4rem;
+  }
+  
+  .sidebar-link {
+    font-size: 1rem;
+    padding: 0.875rem 1rem;
+  }
+  
+  /* Кнопка закрытия меню */
+  .mobile-sidebar-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #e2e8f0;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 1001;
+  }
+  
+  .mobile-sidebar-close:hover {
+    color: #ff8c1a;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-sidebar-close {
+    display: none;
+  }
+}
