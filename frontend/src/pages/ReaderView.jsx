@@ -38,6 +38,7 @@ export default function ReaderView() {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [savedSelection, setSavedSelection] = useState(null);
   const menuRef = useRef(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAnnotation, setEditingAnnotation] = useState(null);
@@ -170,56 +171,64 @@ export default function ReaderView() {
   };
 
   const handleNoteClick = () => {
+    if (pendingSelection) {
+        setSavedSelection({ ...pendingSelection });
+    }
     setShowMenu(false);
     setShowNoteModal(true);
-  };
+};
 
   const handleAddNote = async (color, comment) => {
-    if (!pendingSelection || !soloSession || !currentUser) return;
+    const selection = savedSelection;
+    
+    if (!selection || !soloSession || !currentUser) {
+        return;
+    }
     
     try {
-      const noteData = {
-        solo_session_id: soloSession.id,
-        selected_text: pendingSelection.text,
-        comment: comment,
-        color: color,
-        start_index: pendingSelection.startIndex,
-        end_index: pendingSelection.endIndex
-      };
-      
-      const savedNote = await createSoloNote(noteData);
-      
-      if (window.applyHighlightToCurrentPage) {
-        window.applyHighlightToCurrentPage({
-          id: savedNote.id,
-          type: 'note',
-          color: color,
-          start_index: pendingSelection.startIndex,
-          end_index: pendingSelection.endIndex,
-          comment: comment,
-          selected_text: pendingSelection.text
-        });
-      }
-      
-      setShowNoteModal(false);
-      setPendingSelection(null);
-      window.getSelection()?.removeAllRanges();
-      window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
-      setTimeout(() => {
-      if (window.forceApplyStyles) {
-        window.forceApplyStyles();
-      }
-      }, 50);
-      
+        const noteData = {
+            solo_session_id: soloSession.id,
+            selected_text: selection.text,
+            comment: comment,
+            color: color,
+            start_index: selection.startIndex,
+            end_index: selection.endIndex
+        };
+        
+        const savedNote = await createSoloNote(noteData);
+       
+        if (window.applyHighlightToCurrentPage) {
+            window.applyHighlightToCurrentPage({
+                id: savedNote.id,
+                type: 'note',
+                color: color,
+                start_index: selection.startIndex,
+                end_index: selection.endIndex,
+                comment: comment,
+                selected_text: selection.text
+            });
+        }
+        
+        setShowNoteModal(false);
+        setSavedSelection(null);
+        setPendingSelection(null);
+        window.getSelection()?.removeAllRanges();
+        window.dispatchEvent(new CustomEvent('personalAnnotationsUpdated'));
+        setTimeout(() => {
+            if (window.forceApplyStyles) {
+                window.forceApplyStyles();
+            }
+        }, 50);
     } catch (error) {
-      console.error('Error creating note:', error);
-      alert('Ошибка при создании заметки');
+        console.error('Error creating note:', error);
+        alert('Ошибка при создании заметки');
     }
-  };
+};
 
   const handleCloseNoteModal = () => {
     setShowNoteModal(false);
     setShowMenu(false);
+    setSavedSelection(null);
     setPendingSelection(null);
   };
 

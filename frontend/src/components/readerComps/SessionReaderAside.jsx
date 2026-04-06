@@ -197,7 +197,7 @@ export default function SessionReaderAside({
           onChange={(e) => setFilterType(e.target.value)}
           className="reader-aside-select"
         >
-          <option value="all">Все типы</option>
+          <option  value="all">Все типы</option>
           <option value="note">Только заметки</option>
           <option value="quote">Только цитаты</option>
         </select>

@@ -49,6 +49,7 @@ export default function SessionReaderView() {
   const [showParticipants, setShowParticipants] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [highlightedNoteId, setHighlightedNoteId] = useState(null);
+  const [savedSelection, setSavedSelection] = useState(null);
   const menuRef = useRef(null);
   const wsRef = useRef(null);
   const navigate = useNavigate();
@@ -234,59 +235,64 @@ export default function SessionReaderView() {
   };
 
   const handleNoteClick = () => {
+    if (pendingSelection) {
+      setSavedSelection({ ...pendingSelection });
+    }
     setShowMenu(false);
     setShowNoteModal(true);
-  };
+};
 
   const handleAddNote = async (color, comment, visibility) => {
-    if (!pendingSelection || !session || !currentUser) return;
+    const selection = savedSelection;
+    
+    if (!selection || !session || !currentUser) {
+      console.log('Missing selection');
+      return;
+    }
     
     try {
       const noteData = {
         session_id: session.id,
-        selected_text: pendingSelection.text,
+        selected_text: selection.text,
         comment: comment,
         color: color,
         is_private: visibility === 'private',
-        start_index: pendingSelection.startIndex,
-        end_index: pendingSelection.endIndex
+        start_index: selection.startIndex,
+        end_index: selection.endIndex
       };
       
       const savedNote = await createSessionNote(noteData);
-      
+
       if (window.applyHighlightToCurrentPage) {
         window.applyHighlightToCurrentPage({
           id: savedNote.id,
           type: 'note',
           color: color,
-          start_index: pendingSelection.startIndex,
-          end_index: pendingSelection.endIndex,
+          start_index: selection.startIndex,
+          end_index: selection.endIndex,
           comment: comment,
-          selected_text: pendingSelection.text,
+          selected_text: selection.text,
           is_private: visibility === 'private',
           author_id: currentUser.user_id
         });
       }
       
       setShowNoteModal(false);
+      setSavedSelection(null); 
       setPendingSelection(null);
       window.getSelection()?.removeAllRanges();
       window.dispatchEvent(new CustomEvent('sessionAnnotationsUpdated'));
-      setTimeout(() => {
-      if (window.forceApplyStyles) {
-        window.forceApplyStyles();
-      }
-      }, 50);
       
     } catch (error) {
       console.error('Error creating note:', error);
       alert('Ошибка при создании заметки');
     }
-  };
+};
 
   const handleCloseNoteModal = () => {
     setShowNoteModal(false);
     setShowMenu(false);
+    setSavedSelection(null);
     setPendingSelection(null);
   };
 

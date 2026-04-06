@@ -54,15 +54,20 @@ export default function SessionReaderNote({
     return colors[color] || 'reader-note-quote-yellow';
   };
 
-  const getBorderColorClass = () => {
-    const colors = {
-      yellow: 'reader-note-yellow',
-      green: 'reader-note-green',
-      blue: 'reader-note-blue',
-      pink: 'reader-note-pink'
-    };
-    return colors[color] || 'reader-note-yellow';
+  const getBorderColor = () => {
+  // Для чужих заметок - серая полоса
+  if (!isOwn) {
+    return '#9ca3af';
+  }
+  // Для своих заметок - цвет подчеркивания
+  const colors = {
+    yellow: '#eab308',
+    green: '#22c55e',
+    blue: '#3b82f6',
+    pink: '#ec4899'
   };
+  return colors[color] || '#eab308';
+};
 
   const handleCardClick = (e) => {
     if (e.target.closest('button')) return;
@@ -114,12 +119,17 @@ export default function SessionReaderNote({
     };
   }, [id, showReplies]);
 
-  return (
-    <div 
-      id={elementId}
-      className={`reader-note-card reader-note-${getBorderColorClass()}`}
-      onClick={handleCardClick}
-    >
+ return (
+  <div 
+    id={elementId}
+    className="reader-note-card"
+    style={{ 
+      borderLeftColor: getBorderColor(), 
+      borderLeftWidth: '4px', 
+      borderLeftStyle: 'solid' 
+    }}
+    onClick={handleCardClick}
+  >
       <div className="reader-note-header">
         <span className={`reader-note-author ${isTeacher ? 'reader-note-author-teacher' : ''}`}>
           {author?.name} {isTeacher ? '(Учитель)' : ''}

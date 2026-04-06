@@ -80,7 +80,7 @@ export default function ReaderModal({
                     />
 
                 <div className="reader-modal-color-section">
-                    <span className="reader-modal-color-label">Цвет подчеркивания:</span>
+                    <span className="reader-modal-color-label" style={{ color: '#1e293b', fontWeight: '500' }}>Цвет подчеркивания:</span>
                     <div className="reader-modal-colors">
                         {['yellow', 'green', 'blue', 'pink'].map(c => (
                             <button 

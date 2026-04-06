@@ -74,7 +74,7 @@ export default function SessionReaderModal({
                 />
 
                 <div className="reader-modal-color-section">
-                    <span className="reader-modal-color-label">Цвет подчеркивания:</span>
+                    <span className="reader-modal-color-label" >Цвет подчеркивания:</span>
                     <div className="reader-modal-colors">
                         {['yellow', 'green', 'blue', 'pink'].map(c => (
                             <button 

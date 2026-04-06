@@ -97,7 +97,7 @@ export default function ReaderAside({
           onChange={(e) => setType(e.target.value)}
           className="reader-aside-select"
         >
-          <option value="all">Все</option>
+          <option  value="all">Все</option>
           <option value="note">Заметки</option>
           <option value="quote">Цитаты</option>
         </select>

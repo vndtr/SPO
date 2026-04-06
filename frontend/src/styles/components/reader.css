@@ -1,4 +1,3 @@
-
 .reader-header {
   display: flex;
   flex-direction: column;
@@ -157,7 +156,7 @@
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #1e2a3a 0%, #0f1722 100%);
-  color: #e2e8f0;
+  color:  #e2e8f0;
   height: 100%;
   overflow-y: auto;
 }
@@ -183,6 +182,13 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
 }
+
+
+.reader-aside-select option {
+  background: #ffffff;
+  color: #1e293b;
+}
+
 
 .reader-aside-select:focus {
   outline: none;
@@ -239,13 +245,30 @@
   color: #1e293b;
   border-left-width: 4px;
   border-left-style: solid;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin: 0.25rem 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Цвета левой границы заметок */
-.reader-note-yellow { border-left-color: #eab308; }
-.reader-note-green { border-left-color: #22c55e; }
-.reader-note-blue { border-left-color: #3b82f6; }
-.reader-note-pink { border-left-color: #ec4899; }
+.reader-note-card.reader-note-yellow {
+  border-left-color: #eab308;
+}
+
+.reader-note-card.reader-note-green {
+  border-left-color: #22c55e;
+}
+
+.reader-note-card.reader-note-blue {
+  border-left-color: #3b82f6;
+}
+
+.reader-note-card.reader-note-pink {
+  border-left-color: #ec4899;
+}
 
 /* Карточка цитаты */
 .reader-note-quote {
@@ -256,19 +279,19 @@
 /* Цвета фона цитат */
 .reader-note-quote-yellow {
   background: #fef9c3;
-  border-left: 4px solid #eab308;
+
 }
 .reader-note-quote-green {
   background: #dcfce7;
-  border-left: 4px solid #22c55e;
+ 
 }
 .reader-note-quote-blue {
   background: #dbeafe;
-  border-left: 4px solid #3b82f6;
+
 }
 .reader-note-quote-pink {
   background: #fce7f3;
-  border-left: 4px solid #ec4899;
+
 }
 
 /* Заголовок карточки */
@@ -1142,4 +1165,72 @@
 .reader-theme-beige .reader-modal-selected-content {
   background-color: #ffffff;
   color: #4a3b2c;
+}
+/* Форма ответа на заметку */
+.reader-note-reply-form {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.reader-note-reply-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.reader-note-reply-textarea:focus {
+  outline: none;
+  border-color: #ffb347;
+  box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.1);
+}
+
+.reader-note-reply-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.reader-note-reply-submit {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #ffb347, #ff8c1a);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reader-note-reply-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 140, 26, 0.3);
+}
+
+.reader-note-reply-cancel {
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reader-note-reply-cancel:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
 }

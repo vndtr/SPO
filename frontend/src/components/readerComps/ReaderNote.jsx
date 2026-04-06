@@ -41,15 +41,15 @@ export default function ReaderNote({
     return colors[color] || 'reader-note-quote-yellow';
   };
 
-  const getBorderColorClass = () => {
-    const colors = {
-      yellow: 'reader-note-yellow',
-      green: 'reader-note-green',
-      blue: 'reader-note-blue',
-      pink: 'reader-note-pink'
-    };
-    return colors[color] || 'reader-note-yellow';
+  const getBorderColor = () => {
+      const colors = {
+    yellow: '#eab308',
+    green: '#22c55e',
+    blue: '#3b82f6',
+    pink: '#ec4899'
   };
+  return colors[color] || '#eab308';
+};
 
   if (type === 'quote') {
     return (
@@ -78,10 +78,15 @@ export default function ReaderNote({
   }
   
   return (
-    <div 
-      className={`reader-note-card reader-note-${getBorderColorClass()}`}
-      onClick={handleCardClick}
-    >
+  <div 
+    className="reader-note-card"
+    style={{ 
+      borderLeftColor: getBorderColor(), 
+      borderLeftWidth: '4px', 
+      borderLeftStyle: 'solid' 
+    }}
+    onClick={handleCardClick}
+  >
       <div className="reader-note-header">
         <span className="reader-note-author">Заметка</span>
       </div>
